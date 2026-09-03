@@ -135,16 +135,7 @@ export default function CategoryIndex() {
 
   // Helper to count pletons in a category
   const countPletons = (categoryId: number) => {
-    return pletonList.filter(p => {
-      // We check category based on the school name mapped in database category_id
-      // In the finalists table, they reference category_id directly.
-      // But in the speakers mapping from the controller:
-      // SMP Sederajat is Category 1, SMA/SMK/MA is Category 2.
-      const text = `${p.nama} ${p.bidang}`.toLowerCase();
-      const isSmp = text.includes("smp") || text.includes("mts");
-      const mappedCatId = isSmp ? 1 : 2;
-      return mappedCatId === categoryId;
-    }).length;
+    return pletonList.filter(p => p.category_id === categoryId).length;
   };
 
   // Filtered List
