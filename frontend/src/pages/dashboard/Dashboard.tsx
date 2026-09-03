@@ -1,5 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
+import { API_BASE_URL } from "../../config";
 import { 
   CheckCircle, 
   MapPin, 
@@ -7,7 +9,8 @@ import {
   CreditCard,
   Users,
   Trophy,
-  Vote
+  Vote,
+  Crown
 } from "lucide-react";
 import { usePletonStore } from "../../stores/pletonStore";
 import { useTransactionStore } from "../../stores/transactionStore";
@@ -15,17 +18,29 @@ import { useTransactionStore } from "../../stores/transactionStore";
 export default function Dashboard() {
   const { pletonList, fetchPleton, loading: loadingPleton } = usePletonStore();
   const { transactions, fetchTransactions } = useTransactionStore();
+  const [topStandings, setTopStandings] = useState<any[]>([]);
+
+  const fetchLeaderboard = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/votes/leaderboard`);
+      setTopStandings(res.data);
+    } catch (e) {
+      console.error("Gagal mengambil data leaderboard:", e);
+    }
+  };
 
   useEffect(() => {
     fetchPleton();
     fetchTransactions();
+    fetchLeaderboard();
   }, []);
 
   const totalPleton = pletonList.length;
 
-  const totalVotes = transactions
-    .filter((tx) => tx.status === "Lunas")
-    .reduce((sum, tx) => sum + (tx.votesCount || 0), 0);
+  const totalVotes = topStandings.reduce((sum, item) => sum + (item.votes || 0), 0) || 
+    transactions
+      .filter((tx) => tx.status === "Lunas")
+      .reduce((sum, tx) => sum + (tx.votesCount || 0), 0);
 
   const totalFinance = transactions
     .filter((tx) => tx.status === "Lunas")
@@ -89,12 +104,49 @@ export default function Dashboard() {
           <div className="flex items-center gap-6 text-left md:text-right">
             <div>
               <p className="text-green-55 text-[10px] font-bold tracking-widest uppercase mb-1">HARI INI</p>
-              <p className="font-bold text-sm sm:text-lg">Minggu, 12 Jul</p>
+              <p className="font-bold text-sm sm:text-lg">
+                {new Date().toLocaleDateString("id-ID", { weekday: 'long', day: 'numeric', month: 'short' })}
+              </p>
             </div>
             <button className="bg-white/20 hover:bg-white/30 transition-colors p-4 sm:p-5 rounded-2xl backdrop-blur-sm border border-white/20 shadow-sm cursor-pointer">
               <Calendar size={20} className="text-white sm:w-6 sm:h-6" />
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Live Top 3 Leaderboard Preview */}
+      <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+        <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
+          <div className="flex items-center gap-2">
+            <Crown size={20} className="text-amber-500" />
+            <h3 className="font-bold text-gray-800 text-sm md:text-base">Top 3 Leaderboard Real-time</h3>
+          </div>
+          <Link to="/leaderboard" className="text-xs font-extrabold text-emerald-600 hover:text-emerald-700">
+            Lihat Semua &rarr;
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {topStandings.slice(0, 3).map((item, idx) => (
+            <div key={item.id} className="p-4 bg-emerald-50/30 rounded-2xl border border-emerald-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-xl font-bold flex items-center justify-center text-sm ${
+                  idx === 0 ? "bg-amber-400 text-white" :
+                  idx === 1 ? "bg-slate-300 text-slate-700" : "bg-amber-600 text-white"
+                }`}>
+                  #{idx + 1}
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-800 text-xs md:text-sm line-clamp-1">{item.nama}</h4>
+                  <p className="text-[10px] text-gray-400 font-medium truncate max-w-[120px]">{item.instansi}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-black text-emerald-600 text-sm">{item.votes} <span className="text-[10px] font-normal text-gray-400">suara</span></p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
