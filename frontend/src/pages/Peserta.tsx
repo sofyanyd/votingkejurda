@@ -15,8 +15,8 @@ export default function Peserta() {
 
   const categoryOptions = [
     { id: "Semua", label: "Semua Kategori" },
-    { id: 1, label: "U16" },
     { id: 2, label: "U13" },
+    { id: 1, label: "U16" },
     { id: 3, label: "U19" },
     { id: 4, label: "Purna" },
   ];
@@ -141,16 +141,16 @@ export default function Peserta() {
         </div>
 
         {/* ── CATEGORY FILTER TABS ── */}
-        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-8">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-3 mb-8 w-full">
           {categoryOptions.map((cat) => {
             const isActive = selectedCategory === cat.id;
             return (
               <button
                 key={String(cat.id)}
                 onClick={() => setSelectedCategory(cat.id as any)}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   isActive
-                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20 scale-[1.03]"
+                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20 scale-[1.02]"
                     : "bg-white text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200/80"
                 }`}
               >
