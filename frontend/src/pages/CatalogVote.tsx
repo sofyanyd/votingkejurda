@@ -43,8 +43,8 @@ export default function CatalogVote() {
   });
 
   const categories = [
-    { id: 1, name: "Kategori: U16" },
     { id: 2, name: "Kategori: U13" },
+    { id: 1, name: "Kategori: U16" },
     { id: 3, name: "Kategori: U19" },
     { id: 4, name: "Kategori: Purna" },
   ];

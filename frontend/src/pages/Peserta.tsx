@@ -11,6 +11,15 @@ export default function Peserta() {
 
   const [finalists, setFinalists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<number | "Semua">("Semua");
+
+  const categoryOptions = [
+    { id: "Semua", label: "Semua Kategori" },
+    { id: 1, label: "U16" },
+    { id: 2, label: "U13" },
+    { id: 3, label: "U19" },
+    { id: 4, label: "Purna" },
+  ];
 
   useEffect(() => {
     const fetchFinalists = async () => {
@@ -29,6 +38,7 @@ export default function Peserta() {
             name: item.nama,
             role: role,
             no_urut: no_urut,
+            category_id: item.category_id,
             imageUrl: item.foto_url || `https://via.placeholder.com/400x400.png?text=${encodeURIComponent(item.nama)}`
           };
         });
@@ -41,6 +51,10 @@ export default function Peserta() {
     };
     fetchFinalists();
   }, []);
+
+  const filteredFinalists = selectedCategory === "Semua"
+    ? finalists
+    : finalists.filter(f => f.category_id === Number(selectedCategory));
 
   const faqItems = [
     {
@@ -112,17 +126,38 @@ export default function Peserta() {
         </div>
       </section>
 
-      {/* ── 3. GRID PESERTA (Diberi jarak mt-16 agar fokus utamanya rapi) ── */}
+      {/* ── 3. GRID PESERTA ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 py-6">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-          <div className="flex flex-col items-center sm:items-start">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+          <div className="flex flex-col items-center md:items-start text-center md:text-left">
             <h2 className="text-2xl font-black text-slate-800 tracking-tight">Daftar Delegasi</h2>
-            <p className="text-sm text-slate-500 mt-1 font-medium">Diurutkan berdasarkan pendaftaran</p>
+            <p className="text-sm text-slate-500 mt-1 font-medium">Filter delegasi berdasarkan kategori perlombaan</p>
           </div>
+
           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100">
             <Users size={16} className="text-emerald-500" />
-            <span className="text-slate-700 text-sm font-bold">{finalists.length} Data Valid</span>
+            <span className="text-slate-700 text-sm font-bold">{filteredFinalists.length} Tim Terdaftar</span>
           </div>
+        </div>
+
+        {/* ── CATEGORY FILTER TABS ── */}
+        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-8">
+          {categoryOptions.map((cat) => {
+            const isActive = selectedCategory === cat.id;
+            return (
+              <button
+                key={String(cat.id)}
+                onClick={() => setSelectedCategory(cat.id as any)}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20 scale-[1.03]"
+                    : "bg-white text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200/80"
+                }`}
+              >
+                {cat.label}
+              </button>
+            );
+          })}
         </div>
 
         {loading ? (
@@ -130,16 +165,16 @@ export default function Peserta() {
             <div className="w-10 h-10 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
             <p className="text-slate-500 font-semibold text-sm">Menyelaraskan data...</p>
           </div>
-        ) : finalists.length === 0 ? (
+        ) : filteredFinalists.length === 0 ? (
           <div className="text-center py-20 flex flex-col items-center">
             <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 mb-4">
                 <Users className="text-slate-300" size={32} />
             </div>
-            <p className="text-slate-500 font-semibold">Belum ada delegasi yang terdaftar.</p>
+            <p className="text-slate-500 font-semibold">Belum ada delegasi untuk kategori ini.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 md:gap-6">
-            {finalists.map((f) => (
+            {filteredFinalists.map((f) => (
               <div key={f.id} className="group bg-white p-2.5 rounded-[1.5rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 hover:shadow-[0_8px_30px_rgb(16,185,129,0.1)] hover:border-emerald-100 transition-all duration-300 flex flex-col h-full hover:-translate-y-1 cursor-pointer">
                 
                 <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-100 mb-4">
