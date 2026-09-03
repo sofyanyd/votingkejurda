@@ -29,10 +29,10 @@ export default function Leaderboard() {
 
   const categoryOptions = [
     { id: "Semua", label: "Semua Kategori" },
-    { id: 1, label: "SMA Sederajat" },
-    { id: 2, label: "SMP Sederajat" },
-    { id: 3, label: "SD Sederajat" },
-    { id: 4, label: "Purna / Umum" },
+    { id: 1, label: "U16" },
+    { id: 2, label: "U13" },
+    { id: 3, label: "U19" },
+    { id: 4, label: "Purna" },
   ];
 
   const leaderboardFaqs = [
