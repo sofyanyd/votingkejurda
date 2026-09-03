@@ -16,8 +16,8 @@ CREATE TABLE categories (
     deskripsi TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
--- 3. Create Finalists / Platoons Table (Pleton Peserta)
-CREATE TABLE finalists (
+-- 3. Create Teams Table (Pleton / Tim Peserta)
+CREATE TABLE teams (
     id SERIAL PRIMARY KEY,
     no_urut VARCHAR(10) NOT NULL,
     nama VARCHAR(100) NOT NULL,
@@ -41,11 +41,11 @@ CREATE TABLE tickets (
 CREATE TABLE votes (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
-    finalist_id INT NOT NULL,
+    team_id INT NOT NULL,
     ticket_id INT NOT NULL,
     voted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (finalist_id) REFERENCES finalists(id) ON DELETE CASCADE,
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE
 );
 -- =========================================================================
@@ -56,14 +56,14 @@ INSERT INTO categories (id, nama, deskripsi) VALUES
 (1, 'SMP Sederajat', 'Kategori Lomba untuk Pleton tingkat SMP / MTs sederajat'),
 (2, 'SMA/SMK/MA Sederajat', 'Kategori Lomba untuk Pleton tingkat SMA / SMK / MA sederajat');
 -- Insert Users (Admins and Voters)
--- Note: Passwords below match credentials in README.md
+-- Note: Passwords below match credentials
 -- Admin Password: '12345678'
 -- User Password: '24090027'
 INSERT INTO users (id, name, email, password_hash, role) VALUES
 (1, 'Administrator', 'admin@gmail.com', '$2b$10$wN3/CWhrTq/QYI3oG/fVfeS5m7Q15eMpqQhR7g5L4fW5WdC8d8w3q', 'admin'),
 (2, 'Pranada Alfath', 'pranadaalfath@gmail.com', '$2b$10$tZ2M9p.Y1NfFhW9R/tY.de7L5QW35vQk3q7fN8x5d4e3w2q1r0s9t', 'voter');
--- Insert Finalists (Pleton Peserta)
-INSERT INTO finalists (id, no_urut, nama, asal_sekolah, foto_url, category_id) VALUES
+-- Insert Teams (Pleton / Tim Peserta)
+INSERT INTO teams (id, no_urut, nama, asal_sekolah, foto_url, category_id) VALUES
 -- SMP/MTs (Category 1)
 (1, '01', 'SMP N 2 Tegal', 'SMP N 2 Tegal', 'https://via.placeholder.com/400x400.png?text=SMP+N+2+Tegal', 1),
 (2, '02', 'SMP N 5 Tegal', 'SMP N 5 Tegal', 'https://via.placeholder.com/400x400.png?text=SMP+N+5+Tegal', 1),
@@ -91,5 +91,5 @@ INSERT INTO tickets (id, code, status, user_id, used_at) VALUES
 (3, 'TICKET-LKBB-CCCC-3333', 'active', NULL, NULL),
 (4, 'TICKET-LKBB-DDDD-4444', 'active', NULL, NULL);
 -- Insert Sample Votes
-INSERT INTO votes (id, user_id, finalist_id, ticket_id, voted_at) VALUES
+INSERT INTO votes (id, user_id, team_id, ticket_id, voted_at) VALUES
 (1, 2, 1, 1, '2026-06-21 16:00:00');

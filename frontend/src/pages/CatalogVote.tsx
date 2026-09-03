@@ -4,7 +4,6 @@ import { ArrowLeft, Minus, Plus, ShoppingCart, Info, ChevronUp, Ticket, Sparkles
 import { usePletonStore } from "../stores/pletonStore";
 import { useTransactionStore } from "../stores/transactionStore";
 
-// Tentukan apakah periode voting sudah berakhir (true = ditutup, false = dibuka)
 export const IS_VOTING_CLOSED = false;
 
 interface Participant {
@@ -22,8 +21,6 @@ export default function CatalogVote() {
 
   const [cart, setCart] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  
-  // State untuk toggle keranjang (Mobile)
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
   useEffect(() => {
@@ -67,7 +64,6 @@ export default function CatalogVote() {
         status: "Pending"
       });
 
-      // Arahkan user ke halaman Checkout dengan membawa data transaksi
       navigate("/checkout", { 
         state: { cart, totalPrice, transactionCode, kodeUnik, grandTotal } 
       });
@@ -100,13 +96,15 @@ export default function CatalogVote() {
   const hasItems = cart.length > 0;
 
   return (
-    <div className="bg-[#F8FAFC] font-sans min-h-screen md:min-h-0 p-0 md:p-6 md:h-[calc(100vh-70px)] relative selection:bg-emerald-500 selection:text-white">
+    // DIUBAH: Menggunakan h-[100dvh] dan overflow-hidden agar halaman terkunci
+    <div className="bg-[#F8FAFC] font-sans h-[100dvh] pt-[75px] md:pt-[96px] pb-0 md:pb-6 px-0 md:px-6 flex flex-col relative selection:bg-emerald-500 selection:text-white overflow-hidden">
       
-      {/* Container Utama */}
-      <div className="flex flex-col md:flex-row w-full h-full bg-transparent md:bg-white md:rounded-[2rem] md:shadow-[0_10px_40px_rgb(0,0,0,0.04)] md:border border-slate-100 md:overflow-hidden">
+      {/* Container Utama: flex-1 agar memenuhi sisa layar dengan overflow-hidden */}
+      <div className="flex flex-col md:flex-row w-full h-full flex-1 bg-transparent md:bg-white md:rounded-[2rem] md:shadow-[0_10px_40px_rgb(0,0,0,0.04)] md:border border-slate-100 overflow-hidden relative">
         
-        {/* ── KATALOG PESERTA ── */}
-        <div className="w-full h-full md:bg-[#F8FAFC]/50 md:overflow-y-auto p-4 md:p-8 pb-32 md:pb-20 transition-all duration-300">
+        {/* ── KATALOG PESERTA (Area yang BISA di-scroll) ── */}
+        {/* DIUBAH: Diberi overflow-y-auto agar hanya bagian ini yang ter-scroll */}
+        <div className="w-full h-full md:bg-[#F8FAFC]/50 overflow-y-auto p-4 md:p-8 pb-[140px] md:pb-8 transition-all duration-300">
           
           <button 
             onClick={() => navigate(-1)} 
@@ -211,11 +209,12 @@ export default function CatalogVote() {
         {/* ── KANAN: KERANJANG VOTE (Hanya muncul jika sudah memilih item / Desktop) ── */}
         {hasItems && !IS_VOTING_CLOSED && (
           <div className="hidden md:flex w-80 xl:w-96 h-full flex-col bg-white border-l border-slate-100 relative z-10 animate-in fade-in slide-in-from-right duration-300">
-            <div className="bg-slate-900 p-5 text-white flex items-center gap-2.5">
+            <div className="bg-slate-900 p-5 text-white flex items-center gap-2.5 shadow-sm z-20">
               <ShoppingCart size={20} className="text-emerald-400" />
               <h3 className="font-black text-base tracking-wide">Keranjang Otorisasi</h3>
             </div>
 
+            {/* List Keranjang (Scrollable independen) */}
             <div className="flex-1 overflow-y-auto p-5 bg-white">
               <div className="space-y-4">
                 {cart.map((item) => (
@@ -232,7 +231,7 @@ export default function CatalogVote() {
               </div>
             </div>
 
-            <div className="p-5 border-t border-slate-100 bg-slate-50/80 mt-auto">
+            <div className="p-5 border-t border-slate-100 bg-slate-50/80 z-20">
               <div className="flex justify-between items-end mb-5">
                 <span className="font-bold text-slate-500 text-sm">Total Tagihan</span>
                 <span className="font-black text-emerald-600 text-xl leading-none">
@@ -252,7 +251,7 @@ export default function CatalogVote() {
         )}
       </div>
 
-      {/* ── FLOAT BAR KERANJANG MOBILE (Hanya muncul jika sudah milih) ── */}
+      {/* ── FLOAT BAR KERANJANG MOBILE ── */}
       {hasItems && !IS_VOTING_CLOSED && (
         <div className="md:hidden fixed bottom-0 left-0 w-full z-50 bg-white border-t border-slate-200 shadow-[0_-10px_25px_rgba(0,0,0,0.06)] rounded-t-[2.5rem] transition-transform duration-300 ease-in-out animate-in slide-in-from-bottom duration-300">
           {isMobileCartOpen && (

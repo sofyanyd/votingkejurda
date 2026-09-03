@@ -10,7 +10,7 @@ async function main() {
   await prisma.votes.deleteMany({});
   await prisma.transactions.deleteMany({});
   await prisma.tickets.deleteMany({});
-  await prisma.finalists.deleteMany({});
+  await prisma.teams.deleteMany({});
   await prisma.users.deleteMany({});
   await prisma.categories.deleteMany({});
 
@@ -54,9 +54,9 @@ async function main() {
     ],
   });
 
-  // 4. Insert Finalists (Pleton)
-  console.log("Seeding finalists...");
-  await prisma.finalists.createMany({
+  // 4. Insert Teams (Pleton Peserta)
+  console.log("Seeding teams...");
+  await prisma.teams.createMany({
     data: [
       // SMP/MTs (Category 1)
       { id: 1, no_urut: "01", nama: "SMP N 2 Tegal", asal_sekolah: "SMP N 2 Tegal", foto_url: "https://via.placeholder.com/400x400.png?text=SMP+N+2+Tegal", category_id: 1 },
@@ -96,7 +96,7 @@ async function main() {
   console.log("Seeding votes...");
   await prisma.votes.createMany({
     data: [
-      { id: 1, user_id: 2, finalist_id: 1, ticket_id: 1, voted_at: new Date("2026-06-21T16:00:00Z") }
+      { id: 1, user_id: 2, team_id: 1, ticket_id: 1, voted_at: new Date("2026-06-21T16:00:00Z") }
     ]
   });
 

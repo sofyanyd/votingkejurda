@@ -31,7 +31,7 @@ export const clearSpeakersCache = () => {
   speakersCacheTime = 0;
 };
 
-// GET ALL SPEAKERS (Finalists)
+// GET ALL SPEAKERS (Teams)
 export const getSpeakers = async (req: Request, res: Response) => {
   try {
     const now = Date.now();
@@ -40,12 +40,12 @@ export const getSpeakers = async (req: Request, res: Response) => {
       return res.status(200).json(speakersCache);
     }
 
-    const finalists = await prisma.finalists.findMany({
+    const teams = await prisma.teams.findMany({
       orderBy: { id: "asc" }
     });
     
-    // Map to frontend expected Pembicara (Speaker) format
-    const speakers = finalists.map(f => ({
+    // Map to frontend expected Pembicara (Speaker / Team) format
+    const speakers = teams.map(f => ({
       id: f.id,
       nama: f.nama,
       bidang: `No. ${f.no_urut} - ${f.asal_sekolah}`,
@@ -59,11 +59,11 @@ export const getSpeakers = async (req: Request, res: Response) => {
 
     res.status(200).json(speakers);
   } catch (error) {
-    res.status(500).json({ message: "Gagal mengambil data pembicara/finalis", error });
+    res.status(500).json({ message: "Gagal mengambil data tim/peserta", error });
   }
 };
 
-// CREATE SPEAKER (Finalist)
+// CREATE SPEAKER (Team)
 export const createSpeaker = async (req: Request, res: Response) => {
   try {
     const { nama, bidang, foto_url, category_id } = req.body;
@@ -74,7 +74,7 @@ export const createSpeaker = async (req: Request, res: Response) => {
     const { no_urut, asal_sekolah } = parseBidang(bidang);
     const final_category_id = category_id ? Number(category_id) : determineCategoryId(nama, asal_sekolah);
     
-    const newFinalist = await prisma.finalists.create({
+    const newTeam = await prisma.teams.create({
       data: {
         nama,
         no_urut,
@@ -85,23 +85,23 @@ export const createSpeaker = async (req: Request, res: Response) => {
     });
     
     const speaker = {
-      id: newFinalist.id,
-      nama: newFinalist.nama,
-      bidang: `No. ${newFinalist.no_urut} - ${newFinalist.asal_sekolah}`,
+      id: newTeam.id,
+      nama: newTeam.nama,
+      bidang: `No. ${newTeam.no_urut} - ${newTeam.asal_sekolah}`,
       email: "",
-      foto_url: newFinalist.foto_url,
-      category_id: newFinalist.category_id
+      foto_url: newTeam.foto_url,
+      category_id: newTeam.category_id
     };
     
     clearSpeakersCache();
     res.status(201).json(speaker);
   } catch (error) {
-    console.error("Gagal membuat finalist:", error);
-    res.status(500).json({ message: "Gagal membuat pembicara/finalis", error });
+    console.error("Gagal membuat team:", error);
+    res.status(500).json({ message: "Gagal membuat tim/peserta", error });
   }
 };
 
-// UPDATE SPEAKER (Finalist)
+// UPDATE SPEAKER (Team)
 export const updateSpeaker = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -110,7 +110,7 @@ export const updateSpeaker = async (req: Request, res: Response) => {
     const { no_urut, asal_sekolah } = parseBidang(bidang);
     const final_category_id = category_id ? Number(category_id) : determineCategoryId(nama, asal_sekolah);
     
-    const updatedFinalist = await prisma.finalists.update({
+    const updatedTeam = await prisma.teams.update({
       where: { id: Number(id) },
       data: {
         nama,
@@ -122,12 +122,12 @@ export const updateSpeaker = async (req: Request, res: Response) => {
     });
     
     const speaker = {
-      id: updatedFinalist.id,
-      nama: updatedFinalist.nama,
-      bidang: `No. ${updatedFinalist.no_urut} - ${updatedFinalist.asal_sekolah}`,
+      id: updatedTeam.id,
+      nama: updatedTeam.nama,
+      bidang: `No. ${updatedTeam.no_urut} - ${updatedTeam.asal_sekolah}`,
       email: "",
-      foto_url: updatedFinalist.foto_url,
-      category_id: updatedFinalist.category_id
+      foto_url: updatedTeam.foto_url,
+      category_id: updatedTeam.category_id
     };
     
     clearSpeakersCache();
@@ -137,11 +137,11 @@ export const updateSpeaker = async (req: Request, res: Response) => {
   }
 };
 
-// DELETE SPEAKER (Finalist)
+// DELETE SPEAKER (Team)
 export const deleteSpeaker = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    await prisma.finalists.delete({ where: { id: Number(id) } });
+    await prisma.teams.delete({ where: { id: Number(id) } });
     clearSpeakersCache();
     res.status(200).json({ message: "Peserta berhasil dihapus" });
   } catch (error) {

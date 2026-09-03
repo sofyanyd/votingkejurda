@@ -12,11 +12,11 @@ model categories {
   nama       String      @db.VarChar(100)
   deskripsi  String?
   created_at DateTime?   @default(now()) @db.Timestamp(6)
-  finalists  finalists[]
+  teams      teams[]
   events     events[]
 }
 
-model finalists {
+model teams {
   id           Int            @id @default(autoincrement())
   no_urut      String         @db.VarChar(10)
   nama         String         @db.VarChar(100)
@@ -53,26 +53,26 @@ model users {
 }
 
 model votes {
-  id          Int       @id @default(autoincrement())
-  user_id     Int
-  finalist_id Int
-  ticket_id   Int
-  voted_at    DateTime? @default(now()) @db.Timestamp(6)
-  finalists   finalists @relation(fields: [finalist_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tickets     tickets   @relation(fields: [ticket_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id        Int       @id @default(autoincrement())
+  user_id   Int
+  team_id   Int
+  ticket_id Int
+  voted_at  DateTime? @default(now()) @db.Timestamp(6)
+  teams     teams     @relation(fields: [team_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tickets   tickets   @relation(fields: [ticket_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users     users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model transactions {
   id          Int       @id @default(autoincrement())
   code        String    @unique @db.VarChar(50)
-  finalist_id Int
+  team_id     Int
   votes_count Int
   amount      Float
   voter_email String    @db.VarChar(150)
   status      String    @default("pending") @db.VarChar(20)
   created_at  DateTime? @default(now()) @db.Timestamp(6)
-  finalists   finalists @relation(fields: [finalist_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  teams       teams     @relation(fields: [team_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   kode_unik   Int?
   grand_total Int?
 }
@@ -87,7 +87,7 @@ model events {
   pembicara_id Int
   created_at   DateTime?  @default(now()) @db.Timestamp(6)
   categories   categories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  finalists    finalists  @relation(fields: [pembicara_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  teams        teams      @relation(fields: [pembicara_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model qrcodes {

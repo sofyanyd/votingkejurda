@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
-import crypto from "crypto";
 import prisma from "../lib/prisma.js";
 
 // Tentukan apakah periode voting sudah berakhir (true = ditutup, false = dibuka)
-export const IS_VOTING_CLOSED = true;
+export const IS_VOTING_CLOSED = false;
 
 let leaderboardCache: any = null;
 let leaderboardCacheTime = 0;
@@ -22,15 +21,15 @@ export const getLeaderboard = async (req: Request, res: Response) => {
       return res.status(200).json(leaderboardCache);
     }
 
-    const finalists = await prisma.finalists.findMany({
+    const teams = await prisma.teams.findMany({
       include: {
         votes: true
       }
     });
 
-    const totalVotes = finalists.reduce((acc, f) => acc + f.votes.length, 0);
+    const totalVotes = teams.reduce((acc, f) => acc + f.votes.length, 0);
 
-    const standings = finalists.map(f => {
+    const standings = teams.map(f => {
       const votesCount = f.votes.length;
       const percentage = totalVotes > 0 ? Math.round((votesCount / totalVotes) * 100) : 0;
       return {
@@ -65,7 +64,7 @@ export const getTransactions = async (req: Request, res: Response) => {
   try {
     const transactions = await prisma.transactions.findMany({
       include: {
-        finalists: true
+        teams: true
       },
       orderBy: {
         id: "desc"
@@ -85,7 +84,7 @@ export const getTransactions = async (req: Request, res: Response) => {
           minute: "2-digit",
           timeZone: "Asia/Jakarta"
         }) : "-",
-        namaKlub: t.finalists.nama,
+        namaKlub: t.teams ? t.teams.nama : "Team",
         voterEmail: t.voter_email,
         votesCount: t.votes_count,
         amount: t.amount,
@@ -115,22 +114,22 @@ export const submitVotes = async (req: Request, res: Response) => {
 
     await prisma.$transaction(async (tx) => {
       for (const item of cart) {
-        const finalistId = Number(item.id);
+        const teamId = Number(item.id);
         const qty = Number(item.qty);
 
-        const finalistExists = await tx.finalists.findUnique({
-          where: { id: finalistId }
+        const teamExists = await tx.teams.findUnique({
+          where: { id: teamId }
         });
-        if (!finalistExists) {
-          throw new Error(`Finalis dengan ID ${finalistId} tidak ditemukan`);
+        if (!teamExists) {
+          throw new Error(`Tim dengan ID ${teamId} tidak ditemukan`);
         }
 
-        // 1. Create transaction record for this finalist purchase
+        // 1. Create transaction record for this team purchase
         const txCode = `TX-${Math.floor(10000 + Math.random() * 90000)}`;
         await tx.transactions.create({
           data: {
             code: txCode,
-            finalist_id: finalistId,
+            team_id: teamId,
             votes_count: qty,
             amount: qty * 3000,
             voter_email: "guest@forbasi.com",
@@ -156,20 +155,18 @@ export const submitVotes = async (req: Request, res: Response) => {
             await tx.votes.create({
               data: {
                 user_id: userId,
-                finalist_id: finalistId,
+                team_id: teamId,
                 ticket_id: newTicket.id
               }
             });
           })());
         }
 
-        // 3. Eksekusi semua secara bersamaan (Parallel)
         await Promise.all(votePromises);
       }
     }, {
-      // SETTING TIMEOUT PRISMA
-      maxWait: 5000,   // Maksimal tunggu database merespons: 5 detik
-      timeout: 30000,  // Maksimal waktu proses keseluruhan: 30 detik
+      maxWait: 5000,
+      timeout: 30000,
     });
 
     res.status(200).json({ message: "Vote berhasil dikirim!" });
@@ -193,42 +190,39 @@ export const requestPayment = async (req: Request, res: Response) => {
     let totalAmount = 0;
     const voterEmail = "guest@forbasi.com";
 
-    // Hitung total dasar dan validasi input secara ketat
     for (const item of cart) {
       const qty = Number(item.qty);
       if (!Number.isInteger(qty) || qty <= 0) {
         return res.status(400).json({ message: "Jumlah vote harus berupa bilangan bulat positif" });
       }
 
-      const finalistId = Number(item.id);
-      if (isNaN(finalistId)) {
-        return res.status(400).json({ message: "ID Pleton tidak valid" });
+      const teamId = Number(item.id);
+      if (isNaN(teamId)) {
+        return res.status(400).json({ message: "ID Tim tidak valid" });
       }
 
-      const finalistExists = await prisma.finalists.findUnique({
-        where: { id: finalistId }
+      const teamExists = await prisma.teams.findUnique({
+        where: { id: teamId }
       });
-      if (!finalistExists) {
-        return res.status(400).json({ message: `Pleton dengan ID ${finalistId} tidak ditemukan` });
+      if (!teamExists) {
+        return res.status(400).json({ message: `Tim dengan ID ${teamId} tidak ditemukan` });
       }
 
       totalAmount += (qty * 3000);
     }
 
-    // Buat Kode Unik (Selalu 0 karena dicocokkan secara manual via jumlah & tanggal)
     const kodeUnik = 0;
     const grandTotal = totalAmount;
 
-    // Simpan ke database
     for (const item of cart) {
-      const finalistId = Number(item.id);
+      const teamId = Number(item.id);
       const qty = Number(item.qty);
       const amount = qty * 3000;
 
       await prisma.transactions.create({
         data: {
-          code: `TX-${finalistId}-${paymentCode}`,
-          finalist_id: finalistId,
+          code: `TX-${teamId}-${paymentCode}`,
+          team_id: teamId,
           votes_count: qty,
           amount: amount, 
           voter_email: voterEmail,
@@ -239,7 +233,6 @@ export const requestPayment = async (req: Request, res: Response) => {
       });
     }
 
-    // Kembalikan ke frontend
     res.status(200).json({
       transactionCode: paymentCode,
       totalAmount: totalAmount,
@@ -252,14 +245,12 @@ export const requestPayment = async (req: Request, res: Response) => {
   }
 };
 
-// COMPLETE PAYMENT HELPER (Idempotent db update for transactions, tickets, and votes)
 export const completePayment = async (paymentCode: string) => {
   let cleanCode = paymentCode;
   if (paymentCode.startsWith("TX-")) {
     cleanCode = paymentCode.split("-").slice(2).join("-");
   }
 
-  // Find a voter user, or fall back to the first user in the DB to avoid foreign key violations
   let user = await prisma.users.findFirst({ where: { role: "voter" } });
   if (!user) {
     user = await prisma.users.findFirst();
@@ -267,7 +258,6 @@ export const completePayment = async (paymentCode: string) => {
   const userId = user ? user.id : 2;
 
   return await prisma.$transaction(async (tx) => {
-    // 1. Update status of these transactions to "Lunas" first to prevent race conditions
     const updateResult = await tx.transactions.updateMany({
       where: {
         code: {
@@ -281,11 +271,10 @@ export const completePayment = async (paymentCode: string) => {
     });
 
     if (updateResult.count === 0) {
-      console.log(`No pending transactions found for paymentCode: ${cleanCode} (might be already processed)`);
+      console.log(`No pending transactions found for paymentCode: ${cleanCode}`);
       return { success: false, message: "No pending transactions found or already processed" };
     }
 
-    // 2. Fetch the transactions we just updated to extract their details
     const transactions = await tx.transactions.findMany({
       where: {
         code: {
@@ -295,9 +284,8 @@ export const completePayment = async (paymentCode: string) => {
       }
     });
 
-    // 3. Generate tickets and cast votes in DB in bulk to avoid roundtrip overhead
     for (const transaction of transactions) {
-      const finalistId = transaction.finalist_id;
+      const teamId = transaction.team_id;
       const qty = transaction.votes_count;
 
       const ticketCodes: string[] = [];
@@ -306,7 +294,6 @@ export const completePayment = async (paymentCode: string) => {
         ticketCodes.push(ticketCode);
       }
 
-      // Step A: Bulk insert tickets
       await tx.tickets.createMany({
         data: ticketCodes.map(code => ({
           code,
@@ -316,7 +303,6 @@ export const completePayment = async (paymentCode: string) => {
         }))
       });
 
-      // Step B: Fetch the created tickets to get their generated IDs
       const createdTickets = await tx.tickets.findMany({
         where: {
           code: { in: ticketCodes }
@@ -324,26 +310,23 @@ export const completePayment = async (paymentCode: string) => {
         select: { id: true }
       });
 
-      // Step C: Bulk insert votes linking to the fetched ticket IDs
       await tx.votes.createMany({
         data: createdTickets.map(t => ({
           user_id: userId,
-          finalist_id: finalistId,
+          team_id: teamId,
           ticket_id: t.id
         }))
       });
     }
 
-    console.log(`Payment code ${paymentCode} completed successfully. Casted votes.`);
     clearLeaderboardCache();
     return { success: true, count: transactions.length };
   }, {
-    maxWait: 15000, // 15 seconds
-    timeout: 60000  // 60 seconds
+    maxWait: 15000,
+    timeout: 60000
   });
 };
 
-// FINALIZE PAYMENT (Called by frontend after user returns from Snap popup)
 export const finalizePayment = async (req: Request, res: Response) => {
   try {
     const { transactionCode } = req.body;
@@ -353,7 +336,6 @@ export const finalizePayment = async (req: Request, res: Response) => {
 
     const result = await completePayment(transactionCode);
     if (!result.success) {
-      // Check if transactions are already "Lunas"
       const existingLunas = await prisma.transactions.findFirst({
         where: {
           code: {
@@ -375,41 +357,6 @@ export const finalizePayment = async (req: Request, res: Response) => {
   }
 };
 
-// MOOTA WEBHOOK NOTIFICATION (Dipanggil otomatis oleh sistem Moota)
-export const mootaWebhook = async (req: Request, res: Response) => {
-  try {
-    const mutations = req.body;
-    console.log("Moota Webhook Received:", mutations);
-
-    for (const mutasi of mutations) {
-      if (mutasi.type === 'CR') {
-        const nominalMasuk = parseInt(mutasi.amount);
-
-        const pendingTransactions = await prisma.transactions.findMany({
-          where: {
-            grand_total: nominalMasuk,
-            status: "pending"
-          }
-        });
-
-        if (pendingTransactions.length > 0) {
-          const txCode = pendingTransactions[0].code;
-          const paymentCode = txCode.split('-').slice(2).join('-'); 
-
-          await completePayment(paymentCode);
-          console.log(`Pembayaran otomatis sukses untuk kode ${paymentCode}`);
-        }
-      }
-    }
-
-    res.status(200).send("OK");
-  } catch (error: any) {
-    console.error("Error di Moota Webhook:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-// DELETE / CANCEL TRANSACTION (Wipe transaction and its votes/tickets if they exist)
 export const deleteTransaction = async (req: Request, res: Response) => {
   try {
     const { code } = req.params;
@@ -424,7 +371,6 @@ export const deleteTransaction = async (req: Request, res: Response) => {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Find all transactions matching the payment code
       const transactions = await tx.transactions.findMany({
         where: {
           code: {
@@ -433,7 +379,6 @@ export const deleteTransaction = async (req: Request, res: Response) => {
         }
       });
 
-      // 2. Find all tickets that contain the cleanCode
       const ticketsToDelete = await tx.tickets.findMany({
         where: {
           code: {
@@ -444,7 +389,6 @@ export const deleteTransaction = async (req: Request, res: Response) => {
 
       const ticketIds = ticketsToDelete.map((t) => t.id);
 
-      // Fallback for older transactions that do not contain cleanCode inside their ticket codes
       if (ticketIds.length === 0) {
         for (const transaction of transactions) {
           if (transaction.status === "Lunas" && transaction.created_at) {
@@ -452,10 +396,9 @@ export const deleteTransaction = async (req: Request, res: Response) => {
             const fifteenSecondsBefore = new Date(txTime.getTime() - 15000);
             const fifteenSecondsAfter = new Date(txTime.getTime() + 15000);
 
-            // Find votes for this finalist cast around this transaction's timestamp
             const oldVotes = await tx.votes.findMany({
               where: {
-                finalist_id: transaction.finalist_id,
+                team_id: transaction.team_id,
                 voted_at: {
                   gte: fifteenSecondsBefore,
                   lte: fifteenSecondsAfter
@@ -472,7 +415,6 @@ export const deleteTransaction = async (req: Request, res: Response) => {
         }
       }
 
-      // 3. Delete votes linked to these tickets
       if (ticketIds.length > 0) {
         await tx.votes.deleteMany({
           where: {
@@ -482,7 +424,6 @@ export const deleteTransaction = async (req: Request, res: Response) => {
           }
         });
 
-        // 4. Delete tickets
         await tx.tickets.deleteMany({
           where: {
             id: {
@@ -492,7 +433,6 @@ export const deleteTransaction = async (req: Request, res: Response) => {
         });
       }
 
-      // 5. Delete transactions
       const deleteResult = await tx.transactions.deleteMany({
         where: {
           code: {
@@ -516,25 +456,24 @@ export const submitOfflineVotes = async (req: Request, res: Response) => {
   try {
     const { finalistId, votesCount, voterEmail } = req.body;
     
-    const finalistIdNum = Number(finalistId);
+    const teamIdNum = Number(finalistId);
     const votesCountNum = Number(votesCount);
 
-    if (isNaN(finalistIdNum) || isNaN(votesCountNum) || votesCountNum <= 0) {
-      return res.status(400).json({ message: "ID Pleton atau Jumlah Vote tidak valid" });
+    if (isNaN(teamIdNum) || isNaN(votesCountNum) || votesCountNum <= 0) {
+      return res.status(400).json({ message: "ID Tim atau Jumlah Vote tidak valid" });
     }
 
-    const finalistExists = await prisma.finalists.findUnique({
-      where: { id: finalistIdNum }
+    const teamExists = await prisma.teams.findUnique({
+      where: { id: teamIdNum }
     });
-    if (!finalistExists) {
-      return res.status(450).json({ message: "Pleton tidak ditemukan" });
+    if (!teamExists) {
+      return res.status(404).json({ message: "Tim tidak ditemukan" });
     }
 
     const email = voterEmail || "offline@forbasi.com";
     const paymentCode = `OFFLINE-${Date.now()}`;
-    const transactionCode = `TX-${finalistIdNum}-${paymentCode}`;
+    const transactionCode = `TX-${teamIdNum}-${paymentCode}`;
 
-    // Find a voter user, or fallback
     let user = await prisma.users.findFirst({ where: { role: "voter" } });
     if (!user) {
       user = await prisma.users.findFirst();
@@ -542,11 +481,10 @@ export const submitOfflineVotes = async (req: Request, res: Response) => {
     const userId = user ? user.id : 2;
 
     await prisma.$transaction(async (tx) => {
-      // 1. Create a transaction marked as Lunas
       await tx.transactions.create({
         data: {
           code: transactionCode,
-          finalist_id: finalistIdNum,
+          team_id: teamIdNum,
           votes_count: votesCountNum,
           amount: votesCountNum * 3000,
           voter_email: email,
@@ -556,14 +494,12 @@ export const submitOfflineVotes = async (req: Request, res: Response) => {
         }
       });
 
-      // 2. Create tickets and votes in bulk to avoid roundtrip overhead
       const ticketCodes: string[] = [];
       for (let i = 0; i < votesCountNum; i++) {
         const ticketCode = `TXV-${paymentCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${i}-${Math.floor(100 + Math.random() * 900)}`;
         ticketCodes.push(ticketCode);
       }
 
-      // Step A: Bulk insert tickets
       await tx.tickets.createMany({
         data: ticketCodes.map(code => ({
           code,
@@ -573,7 +509,6 @@ export const submitOfflineVotes = async (req: Request, res: Response) => {
         }))
       });
 
-      // Step B: Fetch the created tickets to get their generated IDs
       const createdTickets = await tx.tickets.findMany({
         where: {
           code: { in: ticketCodes }
@@ -581,17 +516,16 @@ export const submitOfflineVotes = async (req: Request, res: Response) => {
         select: { id: true }
       });
 
-      // Step C: Bulk insert votes linking to the fetched ticket IDs
       await tx.votes.createMany({
         data: createdTickets.map(t => ({
           user_id: userId,
-          finalist_id: finalistIdNum,
+          team_id: teamIdNum,
           ticket_id: t.id
         }))
       });
     }, {
       maxWait: 15000,
-      timeout: 60000 // 60 seconds timeout
+      timeout: 60000
     });
 
     clearLeaderboardCache();

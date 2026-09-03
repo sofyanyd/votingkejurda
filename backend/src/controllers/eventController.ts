@@ -7,7 +7,7 @@ export const getEvents = async (req: Request, res: Response) => {
     const events = await prisma.events.findMany({
       include: {
         categories: true,
-        finalists: true
+        teams: true
       },
       orderBy: {
         id: "asc"
@@ -24,7 +24,7 @@ export const getEvents = async (req: Request, res: Response) => {
       categoryId: e.category_id,
       pembicaraId: e.pembicara_id,
       category: { nama: e.categories.nama },
-      pembicara: { nama: e.finalists.nama, bidang: `No. ${e.finalists.no_urut} - ${e.finalists.asal_sekolah}` }
+      pembicara: { nama: e.teams.nama, bidang: `No. ${e.teams.no_urut} - ${e.teams.asal_sekolah}` }
     }));
 
     res.status(200).json(mapped);
@@ -53,7 +53,7 @@ export const createEvent = async (req: Request, res: Response) => {
       },
       include: {
         categories: true,
-        finalists: true
+        teams: true
       }
     });
 
@@ -66,7 +66,7 @@ export const createEvent = async (req: Request, res: Response) => {
       categoryId: newEvent.category_id,
       pembicaraId: newEvent.pembicara_id,
       category: { nama: newEvent.categories.nama },
-      pembicara: { nama: newEvent.finalists.nama, bidang: `No. ${newEvent.finalists.no_urut} - ${newEvent.finalists.asal_sekolah}` }
+      pembicara: { nama: newEvent.teams.nama, bidang: `No. ${newEvent.teams.no_urut} - ${newEvent.teams.asal_sekolah}` }
     };
 
     res.status(201).json(mapped);
@@ -95,7 +95,7 @@ export const updateEvent = async (req: Request, res: Response) => {
       data,
       include: {
         categories: true,
-        finalists: true
+        teams: true
       }
     });
 
@@ -108,7 +108,7 @@ export const updateEvent = async (req: Request, res: Response) => {
       categoryId: updatedEvent.category_id,
       pembicaraId: updatedEvent.pembicara_id,
       category: { nama: updatedEvent.categories.nama },
-      pembicara: { nama: updatedEvent.finalists.nama, bidang: `No. ${updatedEvent.finalists.no_urut} - ${updatedEvent.finalists.asal_sekolah}` }
+      pembicara: { nama: updatedEvent.teams.nama, bidang: `No. ${updatedEvent.teams.no_urut} - ${updatedEvent.teams.asal_sekolah}` }
     };
 
     res.status(200).json(mapped);
