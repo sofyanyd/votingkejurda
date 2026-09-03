@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { API_BASE_URL } from "../../../config";
 import { useQrCodeStore, type QrCode } from "../../../stores/useQrCodeStore";
+import { usePletonStore } from "../../../stores/pletonStore";
+import { useTransactionStore, type VoteTransaction } from "../../../stores/transactionStore";
 import { 
   Coins, 
   Download, 
@@ -15,26 +15,18 @@ import {
   FileText
 } from "lucide-react";
 
-// Tipe Data Transaksi Voting
-interface VoteTransaction {
-  id: string;
-  date: string;
-  namaKlub: string;
-  voterEmail: string;
-  votesCount: number;
-  amount: number;
-  kodeUnik?: number;
-  grandTotal?: number;
-  status: string;
-  createdAt?: string;
-}
-
 export default function FinanceIndex() {
   const { qrList, addQrCode, updateQrCode, deleteQrCode, fetchQrCodes } = useQrCodeStore();
+  const { pletonList, fetchPleton } = usePletonStore();
+  const { 
+    transactions, 
+    fetchTransactions, 
+    approveTransaction, 
+    deleteTransaction, 
+    addOfflineVote 
+  } = useTransactionStore();
 
-  const [transactions, setTransactions] = useState<VoteTransaction[]>([]);
-  const [pletonList, setPletonList] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Navigation Tab State
   const [activeTab, setActiveTab] = useState<"Dashboard" | "Detail Laporan" | "Histori Transaksi" | "Kelola QR Code" | "Tambah Vote Offline">("Dashboard");
@@ -68,25 +60,12 @@ export default function FinanceIndex() {
   const [selectedPletonId, setSelectedPletonId] = useState("");
   const [offlineVotesQty, setOfflineVotesQty] = useState(1);
   const [offlineVoterEmail, setOfflineVoterEmail] = useState("");
+
   // Fetch data on mount
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [txRes, speakerRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/votes/transactions`),
-          axios.get(`${API_BASE_URL}/speakers`),
-          fetchQrCodes()
-        ]);
-        setTransactions(txRes.data);
-        setPletonList(speakerRes.data);
-      } catch (error) {
-        console.error("Gagal memuat data keuangan dari database:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchTransactions();
+    fetchPleton();
+    fetchQrCodes();
   }, []);
 
   // Inject beautiful Google Font dynamically on component mount
@@ -106,21 +85,8 @@ export default function FinanceIndex() {
     }
     
     showToast("Memproses verifikasi pembayaran...", "loading");
-    try {
-      await axios.post(`${API_BASE_URL}/votes/finalize-payment`, { transactionCode });
-      showToast("Pembayaran berhasil diverifikasi secara manual! Suara vote telah masuk ke sistem.", "success");
-      
-      // Refresh transactions and pletons list
-      const [txRes, speakersRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/votes/transactions`),
-        axios.get(`${API_BASE_URL}/speakers`)
-      ]);
-      setTransactions(txRes.data);
-      setPletonList(speakersRes.data);
-    } catch (error: any) {
-      console.error("Gagal melakukan verifikasi manual:", error);
-      showToast(error.response?.data?.message || "Gagal memverifikasi transaksi secara manual", "error");
-    }
+    approveTransaction(transactionCode);
+    showToast("Pembayaran berhasil diverifikasi secara manual! Suara vote telah masuk ke sistem.", "success");
   };
 
   const handleDeleteTransaction = async (transactionCode: string, status: string) => {
@@ -133,21 +99,8 @@ export default function FinanceIndex() {
     }
 
     showToast("Menghapus transaksi...", "loading");
-    try {
-      await axios.delete(`${API_BASE_URL}/votes/transactions/${transactionCode}`);
-      showToast("Transaksi dan suara terkait berhasil dihapus!", "success");
-
-      // Refresh transactions and pletons list
-      const [txRes, speakersRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/votes/transactions`),
-        axios.get(`${API_BASE_URL}/speakers`)
-      ]);
-      setTransactions(txRes.data);
-      setPletonList(speakersRes.data);
-    } catch (error: any) {
-      console.error("Gagal menghapus transaksi:", error);
-      showToast(error.response?.data?.message || "Gagal menghapus transaksi", "error");
-    }
+    deleteTransaction(transactionCode);
+    showToast("Transaksi dan suara terkait berhasil dihapus!", "success");
   };
 
   const handleSubmitOfflineVotes = async (e: React.FormEvent) => {
@@ -161,35 +114,21 @@ export default function FinanceIndex() {
       return;
     }
 
-    if (!window.confirm(`Apakah Anda yakin ingin menambahkan ${offlineVotesQty} vote offline untuk Pleton pilihan ini?`)) {
+    const targetPleton = pletonList.find(p => String(p.id) === String(selectedPletonId));
+    const namaKlub = targetPleton ? targetPleton.nama : "Pleton";
+
+    if (!window.confirm(`Apakah Anda yakin ingin menambahkan ${offlineVotesQty} vote offline untuk Pleton ${namaKlub}?`)) {
       return;
     }
 
     showToast("Memasukkan vote offline...", "loading");
-    try {
-      await axios.post(`${API_BASE_URL}/votes/submit-offline`, {
-        finalistId: selectedPletonId,
-        votesCount: offlineVotesQty,
-        voterEmail: offlineVoterEmail.trim() || undefined
-      });
-      showToast("Vote offline berhasil dimasukkan ke sistem!", "success");
-      
-      // Reset form
-      setSelectedPletonId("");
-      setOfflineVotesQty(1);
-      setOfflineVoterEmail("");
-
-      // Refresh data
-      const [txRes, speakersRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/votes/transactions`),
-        axios.get(`${API_BASE_URL}/speakers`)
-      ]);
-      setTransactions(txRes.data);
-      setPletonList(speakersRes.data);
-    } catch (error: any) {
-      console.error("Gagal menambahkan vote offline:", error);
-      showToast(error.response?.data?.message || "Gagal memproses vote offline", "error");
-    }
+    addOfflineVote(namaKlub, offlineVotesQty, offlineVoterEmail.trim() || undefined);
+    showToast("Vote offline berhasil dimasukkan ke sistem!", "success");
+    
+    // Reset form
+    setSelectedPletonId("");
+    setOfflineVotesQty(1);
+    setOfflineVoterEmail("");
   };
 
   // Helper to parse bidang string "No. {noUrut} - {sekolah}"

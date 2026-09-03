@@ -1,6 +1,4 @@
 import { create } from "zustand";
-import axios from "axios";
-import { API_BASE_URL } from "../config";
 
 export interface CategoryData {
   id: number;
@@ -17,64 +15,57 @@ interface CategoryState {
   updateCategory: (id: number, formData: Omit<CategoryData, "id">) => Promise<boolean>;
 }
 
+const DEFAULT_CATEGORIES: CategoryData[] = [
+  { id: 1, nama: "SMP Sederajat", deskripsi: "Kategori Lomba untuk Pleton tingkat SMP / MTs sederajat" },
+  { id: 2, nama: "SMA/SMK/MA Sederajat", deskripsi: "Kategori Lomba untuk Pleton tingkat SMA / SMK / MA sederajat" }
+];
+
+const getStoredCategories = (): CategoryData[] => {
+  const stored = localStorage.getItem("dummy_categories");
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  return DEFAULT_CATEGORIES;
+};
+
+const saveCategories = (cats: CategoryData[]) => {
+  localStorage.setItem("dummy_categories", JSON.stringify(cats));
+};
+
 export const useCategoryStore = create<CategoryState>((set, get) => ({
-  categories: [],
+  categories: getStoredCategories(),
   loading: false,
 
-  // 1. GET ALL CATEGORIES
   fetchCategories: async () => {
     set({ loading: true });
-    try {
-      const response = await axios.get(`${API_BASE_URL}/categories`);
-      set({ categories: response.data, loading: false });
-    } catch (error) {
-      console.error("Gagal mengambil data kategori:", error);
-      set({ loading: false });
-    }
+    set({ categories: getStoredCategories(), loading: false });
   },
 
-  // 2. POST CATEGORY
   addCategory: async (formData) => {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/categories`, formData);
-      if (response.status === 201 || response.status === 200) {
-        get().fetchCategories();
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Gagal menambah kategori:", error);
-      return false;
-    }
+    const list = get().categories;
+    const newId = list.length > 0 ? Math.max(...list.map(c => c.id)) + 1 : 1;
+    const newItem: CategoryData = { id: newId, ...formData };
+    const updated = [...list, newItem];
+    saveCategories(updated);
+    set({ categories: updated });
+    return true;
   },
 
-  // 3. DELETE CATEGORY
   deleteCategory: async (id) => {
-    try {
-      const response = await axios.delete(`${API_BASE_URL}/categories/${id}`);
-      if (response.status === 200) {
-        get().fetchCategories();
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Gagal menghapus kategori:", error);
-      return false;
-    }
+    const updated = get().categories.filter(c => c.id !== id);
+    saveCategories(updated);
+    set({ categories: updated });
+    return true;
   },
 
-  // 4. PUT CATEGORY
   updateCategory: async (id, formData) => {
-    try {
-      const response = await axios.put(`${API_BASE_URL}/categories/${id}`, formData);
-      if (response.status === 200) {
-        get().fetchCategories();
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Gagal memperbarui kategori:", error);
-      return false;
-    }
+    const updated = get().categories.map(c => c.id === id ? { ...c, ...formData } : c);
+    saveCategories(updated);
+    set({ categories: updated });
+    return true;
   },
 }));

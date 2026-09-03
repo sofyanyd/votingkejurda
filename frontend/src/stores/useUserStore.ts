@@ -1,6 +1,4 @@
 import { create } from "zustand";
-import axios from "axios";
-import { API_BASE_URL } from "../config";
 
 export interface UserAdmin {
   id: string;
@@ -19,62 +17,57 @@ interface UserState {
   deleteUser: (id: string) => Promise<boolean>;
 }
 
-const API_URL = `${API_BASE_URL}/auth/users`;
+const DEFAULT_USERS: UserAdmin[] = [
+  { id: "1", username: "Administrator", email: "admin@gmail.com", password: "12345678", role: "admin" },
+  { id: "2", username: "Pranada Alfath", email: "pranadaalfath@gmail.com", password: "24090027", role: "voter" }
+];
+
+const getStoredUsers = (): UserAdmin[] => {
+  const stored = localStorage.getItem("dummy_users");
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  return DEFAULT_USERS;
+};
+
+const saveUsers = (users: UserAdmin[]) => {
+  localStorage.setItem("dummy_users", JSON.stringify(users));
+};
 
 export const useUserStore = create<UserState>((set, get) => ({
-  userList: [],
+  userList: getStoredUsers(),
   loading: false,
 
   fetchUsers: async () => {
     set({ loading: true });
-    try {
-      const response = await axios.get(API_URL);
-      set({ userList: response.data, loading: false });
-    } catch (error) {
-      console.error("Gagal memuat user admin:", error);
-      set({ loading: false });
-    }
+    set({ userList: getStoredUsers(), loading: false });
   },
 
   addUser: async (user) => {
-    try {
-      const response = await axios.post(API_URL, user);
-      if (response.status === 201 || response.status === 200) {
-        get().fetchUsers();
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Gagal menambahkan user admin:", error);
-      return false;
-    }
+    const list = get().userList;
+    const newId = String(Date.now());
+    const newItem: UserAdmin = { id: newId, role: "admin", ...user };
+    const updated = [...list, newItem];
+    saveUsers(updated);
+    set({ userList: updated });
+    return true;
   },
 
-  updateUser: async (id, updated) => {
-    try {
-      const response = await axios.put(`${API_URL}/${id}`, updated);
-      if (response.status === 200) {
-        get().fetchUsers();
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Gagal memperbarui user admin:", error);
-      return false;
-    }
+  updateUser: async (id, updatedData) => {
+    const updated = get().userList.map(u => u.id === id ? { ...u, ...updatedData } : u);
+    saveUsers(updated);
+    set({ userList: updated });
+    return true;
   },
 
   deleteUser: async (id) => {
-    try {
-      const response = await axios.delete(`${API_URL}/${id}`);
-      if (response.status === 200) {
-        get().fetchUsers();
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Gagal menghapus user admin:", error);
-      return false;
-    }
+    const updated = get().userList.filter(u => u.id !== id);
+    saveUsers(updated);
+    set({ userList: updated });
+    return true;
   },
 }));

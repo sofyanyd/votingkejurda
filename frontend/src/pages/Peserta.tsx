@@ -3,9 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
 import Button from "../components/ui/Button";
-import Card from "../components/ui/Card";
 import { Collapse } from "../components/ui/Collapse";
-import { Calendar, Clock, MapPin, CheckCircle, Users, Sparkles } from "lucide-react";
+import { Calendar, MapPin, CheckCircle, Users, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 
 export default function Peserta() {
   const navigate = useNavigate();
@@ -46,151 +45,155 @@ export default function Peserta() {
   const faqItems = [
     {
       title: "Bagaimana kriteria penentuan Juara Favorit?",
-      description: "Juara Favorit murni ditentukan dari akumulasi jumlah tiket vote (dukungan) yang masuk melalui platform voting ini. Tidak ada intervensi dari nilai dewan juri lapangan.",
+      description: "Juara Favorit murni ditentukan dari akumulasi jumlah otorisasi suara (voting) yang masuk melalui platform resmi ini. Tidak ada intervensi dari nilai dewan juri lapangan KEJURDA.",
     },
     {
-      title: "Apakah saya bisa melihat profil detail setiap pleton?",
-      description: "Saat ini, informasi yang ditampilkan mencakup nama pleton, asal instansi, dan nomor urut tampil. Foto resmi akan diunggah oleh panitia setelah sesi technical meeting.",
+      title: "Apakah profil detail delegasi akan diperbarui?",
+      description: "Ya. Saat ini informasi difokuskan pada nama delegasi, asal instansi, dan nomor urut tampil. Foto resmi dan data tambahan akan diunggah oleh panitia daerah setelah validasi final.",
     },
     {
-      title: "Di mana saya bisa memberikan vote untuk mereka?",
-      description: "Kamu bisa pergi ke menu 'Dukungan' di bagian atas, lalu klik tombol Beli Tiket Vote untuk masuk ke halaman Katalog Voting resmi kami.",
+      title: "Bagaimana cara menyumbangkan suara?",
+      description: "Navigasikan ke menu 'Dukungan', dapatkan Tiket Vote resmi, lalu masuk ke Katalog Voting untuk mengeksekusi dukungan Anda kepada delegasi pilihan.",
     },
   ];
 
   return (
-    <div className="bg-slate-50 font-sans min-h-screen pb-20">
+    <div className="w-full bg-[#F8FAFC] font-sans min-h-screen pb-24 selection:bg-emerald-500 selection:text-white">
 
-      {/* ── 1. HERO SECTION (CENTERED LAYOUT) ── */}
-      <section className="bg-white border-b border-slate-200 relative overflow-hidden">
-        {/* Dekorasi Background */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-full bg-emerald-50 rounded-full blur-3xl opacity-40 pointer-events-none"></div>
+      {/* ── 1. HERO SECTION (Diberi pt-32 / pt-36 agar turun dan tidak tertutup header) ── */}
+      <section className="relative w-full pt-32 pb-16 md:pt-36 md:pb-20 overflow-hidden flex flex-col items-center text-center px-6 border-b border-slate-100 bg-white">
         
-        {/* UBAH: Padding disesuaikan untuk HP (py-16) dan Desktop (md:py-24) */}
-        <div className="max-w-4xl mx-auto px-6 py-16 md:py-24 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest mb-6 border border-emerald-100">
-            <Sparkles size={16} className="text-emerald-500" /> KANDIDAT JUARA
+        {/* Soft Background Glows */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-full pointer-events-none opacity-60">
+            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-emerald-100/50 blur-[100px] mix-blend-multiply"></div>
+            <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] rounded-full bg-teal-50/80 blur-[80px] mix-blend-multiply"></div>
+        </div>
+
+        <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
+          <div className="inline-flex items-center gap-1.5 bg-emerald-50/80 border border-emerald-100/50 text-emerald-600 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest mb-4 shadow-sm">
+            <Sparkles size={14} /> ROSTER OFFICIAL
           </div>
           
-          {/* UBAH: text-5xl diturunkan ke text-4xl untuk HP, baru naik ke 5xl di tablet/desktop */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight mb-6">
-            Galeri <span className="text-emerald-600">Peserta</span>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-800 tracking-tight leading-[1.15] mb-4">
+            Galeri <span className="text-emerald-600">Kandidat Daerah</span>
           </h1>
           
-          <p className="text-base md:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto mb-10">
-            Kenali seluruh pleton tangguh yang akan bertanding memperebutkan piala dan gelar Juara Favorit di KEJURCAB 2026. Tentukan jagoanmu dari sekarang!
+          <p className="text-slate-500 text-sm md:text-base leading-relaxed font-medium mb-8 max-w-2xl">
+            Jelajahi formasi resmi peserta KEJURDA 2026. Analisis profil dan rekam jejak delegasi sebelum Anda menjatuhkan otorisasi suara berharga Anda.
           </p>
           
-          {/* UBAH: flex-wrap diganti flex-col di HP agar tombolnya full-width dan gampang dipencet */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto sm:max-w-none">
-            <Button className="w-full sm:w-auto" label="LIHAT LEADERBOARD" variant="primary" onClick={() => navigate("/leaderboard")} />
-            <Button className="w-full sm:w-auto" label="BERIKAN DUKUNGAN" variant="outline" onClick={() => navigate("/dukungan")} />
-          </div>
+          <Button 
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-8 py-3.5 flex items-center justify-center gap-2 transition-all rounded-xl shadow-[0_8px_20px_rgb(16,185,129,0.2)] hover:-translate-y-1 cursor-pointer" 
+              onClick={() => navigate("/dukungan")}
+          >
+              OTORISASI SUARA <ArrowRight size={18} />
+          </Button>
         </div>
       </section>
 
-      {/* ── 2. INFO BAR (HORIZONTAL LAYOUT) ── */}
-      <section className="max-w-5xl mx-auto px-6 -mt-8 relative z-20 mb-16">
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-2 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100">
+      {/* ── 2. FLOATING INFO BAR ── */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 relative z-20 -mt-8 md:-mt-10 mb-12">
+        <div className="bg-white/90 backdrop-blur-xl rounded-[2rem] shadow-[0_10px_40px_rgb(0,0,0,0.04)] border border-white p-2.5 flex flex-col md:flex-row gap-2 md:gap-0 divide-y md:divide-y-0 md:divide-x divide-slate-100">
           {[
-            { icon: Calendar, title: "Tanggal", val: "12 Juli 2026" },
-            { icon: Clock, title: "Waktu", val: "08.00 WIB" },
-            { icon: MapPin, title: "Lokasi", val: "Lapangan Universitas BSI Kampus Tegal" },
-            { icon: CheckCircle, title: "Juara", val: "16.00 WIB" },
+            { icon: Calendar, title: "TANGGAL", val: "12 Juli 2026" },
+            { icon: MapPin, title: "LOKASI", val: "Universitas BSI Tegal" },
+            { icon: CheckCircle, title: "PENUTUPAN", val: "16.00 WIB" },
           ].map((item, i) => (
-            // UBAH PADA BARIS DI BAWAH INI: 
-            // Dari justify-center menjadi: justify-start px-8 py-5 md:justify-center md:px-4
-            <div key={i} className="flex-1 flex items-center justify-start px-8 py-5 md:justify-center md:px-4 hover:bg-slate-50 transition-colors rounded-xl md:rounded-none first:rounded-t-xl md:first:rounded-l-xl md:first:rounded-tr-none last:rounded-b-xl md:last:rounded-r-xl md:last:rounded-bl-none">
-              
-              <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center shrink-0">
+            <div key={i} className="flex-1 flex items-center justify-start md:justify-center px-6 py-4 hover:bg-slate-50/50 transition-colors first:rounded-t-[1.5rem] md:first:rounded-l-[1.5rem] md:first:rounded-tr-none last:rounded-b-[1.5rem] md:last:rounded-r-[1.5rem] md:last:rounded-bl-none">
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-emerald-500 shrink-0 border border-slate-100">
                 <item.icon size={20} />
               </div>
-              <div className="text-left">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{item.title}</p>
-                {/* Tambahan leading-snug agar kalau teks lokasi turun ke baris bawah, jarak spasinya pas */}
-                <h4 className="font-bold text-slate-900 text-sm md:text-base leading-snug pr-4">{item.val}</h4>
+              <div className="text-left ml-4">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{item.title}</p>
+                <h4 className="font-black text-slate-700 text-sm md:text-base">{item.val}</h4>
               </div>
-
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── 3. GRID PESERTA ── */}
-      <section className="max-w-7xl mx-auto px-6 py-10">
-        {/* UBAH: flex-row diubah jadi flex-col untuk HP, agar judul dan badge nggak saling gencet */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10 border-b border-slate-200 pb-4">
-          <div className="flex items-center gap-3">
-            <Users className="text-emerald-600 shrink-0" size={28} />
-            <h2 className="text-2xl md:text-3xl font-black text-slate-900">Daftar Pleton</h2>
+      {/* ── 3. GRID PESERTA (Diberi jarak mt-16 agar fokus utamanya rapi) ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 py-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+          <div className="flex flex-col items-center sm:items-start">
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Daftar Delegasi</h2>
+            <p className="text-sm text-slate-500 mt-1 font-medium">Diurutkan berdasarkan pendaftaran</p>
           </div>
-          <span className="bg-slate-200 text-slate-600 text-xs font-black px-3 py-1 rounded-md uppercase tracking-widest self-start sm:self-auto">
-            {finalists.length} Peserta
-          </span>
+          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100">
+            <Users size={16} className="text-emerald-500" />
+            <span className="text-slate-700 text-sm font-bold">{finalists.length} Data Valid</span>
+          </div>
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-slate-500 font-semibold bg-white rounded-3xl border border-slate-200 shadow-sm">
-            Sedang memuat data pleton peserta...
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-10 h-10 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
+            <p className="text-slate-500 font-semibold text-sm">Menyelaraskan data...</p>
           </div>
         ) : finalists.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 font-medium bg-white rounded-3xl border border-slate-200 shadow-sm">
-            Belum ada data pleton peserta.
+          <div className="text-center py-20 flex flex-col items-center">
+            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 mb-4">
+                <Users className="text-slate-300" size={32} />
+            </div>
+            <p className="text-slate-500 font-semibold">Belum ada delegasi yang terdaftar.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 md:gap-6">
             {finalists.map((f) => (
-              <Card key={f.id} className="group p-2 flex flex-col h-full hover:-translate-y-1 transition-transform duration-300 border-slate-200">
-                {/* Foto Peserta */}
-                <div className="relative aspect-square bg-slate-100 rounded-xl overflow-hidden mb-3">
-                  <img
-                    src={f.imageUrl}
-                    alt={f.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
+              <div key={f.id} className="group bg-white p-2.5 rounded-[1.5rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 hover:shadow-[0_8px_30px_rgb(16,185,129,0.1)] hover:border-emerald-100 transition-all duration-300 flex flex-col h-full hover:-translate-y-1 cursor-pointer">
+                
+                <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-100 mb-4">
+                    <img
+                      src={f.imageUrl}
+                      alt={f.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    
+                    <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm text-slate-800 font-black text-xs px-2.5 py-1.5 rounded-lg shadow-sm border border-white/50">
+                      #{f.no_urut}
+                    </div>
                 </div>
 
-                {/* Info Peserta */}
-                <div className="px-2 pb-2 text-center flex flex-col items-center flex-grow">
-                  <span className="bg-emerald-50 text-emerald-700 font-black text-[10px] px-3 py-1 rounded-full mb-2">
-                    NO. {f.no_urut}
-                  </span>
-                  <h3 className="font-bold text-slate-900 text-sm md:text-base leading-tight mb-1 truncate w-full">
+                <div className="px-2 pb-2 flex flex-col flex-grow">
+                  <h3 className="font-black text-slate-800 text-sm md:text-base leading-tight mb-1.5 group-hover:text-emerald-600 transition-colors line-clamp-2">
                     {f.name}
                   </h3>
-                  <p className="text-[11px] text-slate-500 truncate w-full font-medium">
-                    {f.role}
-                  </p>
+                  <div className="mt-auto flex items-center justify-between pt-2">
+                      <p className="text-xs text-slate-500 font-medium truncate max-w-[85%]">
+                        {f.role}
+                      </p>
+                      <div className="w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity group-hover:bg-emerald-50 text-emerald-600">
+                          <ArrowRight size={12} className="-rotate-45" />
+                      </div>
+                  </div>
                 </div>
-              </Card>
+
+              </div>
             ))}
           </div>
         )}
       </section>
 
-      {/* ── 4. FAQ SECTION (SPLIT LAYOUT) ── */}
-      {/* Kodingan ini juga aman, otomatis numpuk di HP berkat lg:col-span-1 */}
-      <section className="max-w-6xl mx-auto px-6 py-20 mt-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
-          <div className="lg:col-span-1 sticky top-24">
-            <h2 className="text-3xl font-black text-slate-900 mb-4 leading-tight">
-              Punya <span className="text-emerald-600">Pertanyaan?</span>
-            </h2>
-            <p className="text-slate-500 text-sm leading-relaxed mb-6">
-              Berikut adalah beberapa pertanyaan yang sering diajukan seputar peserta dan mekanisme pemilihan juara favorit.
-            </p>
-            <div className="w-16 h-1 bg-emerald-500 rounded-full"></div>
-          </div>
-          
-          <div className="lg:col-span-2 flex flex-col gap-3">
+      {/* ── 4. FAQ SECTION ── */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex flex-col items-center text-center mb-10">
+            <div className="w-14 h-14 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-4 border border-emerald-100">
+                <ShieldCheck size={28} />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Pusat Validasi</h2>
+            <p className="text-slate-500 mt-2 text-sm md:text-base max-w-lg">Informasi resmi seputar transparansi profil delegasi dan mekanisme penentuan Juara Favorit Daerah.</p>
+        </div>
+
+        <div className="flex flex-col gap-3">
             {faqItems.map((item, index) => (
-              <Collapse
-                key={index}
-                title={item.title}
-                description={item.description}
-              />
+            <div key={index} className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.02)] border border-slate-100 overflow-hidden hover:border-emerald-100 transition-colors">
+                <Collapse
+                    title={item.title}
+                    description={item.description}
+                />
+            </div>
             ))}
-          </div>
         </div>
       </section>
 

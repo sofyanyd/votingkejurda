@@ -1,7 +1,5 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
-import { API_BASE_URL } from "../../config";
 import { 
   CheckCircle, 
   MapPin, 
@@ -11,41 +9,29 @@ import {
   Trophy,
   Vote
 } from "lucide-react";
+import { usePletonStore } from "../../stores/pletonStore";
+import { useTransactionStore } from "../../stores/transactionStore";
 
 export default function Dashboard() {
-  const [totalPleton, setTotalPleton] = useState(0);
-  const [totalVotes, setTotalVotes] = useState(0);
-  const [totalFinance, setTotalFinance] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const { pletonList, fetchPleton, loading: loadingPleton } = usePletonStore();
+  const { transactions, fetchTransactions } = useTransactionStore();
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [speakersRes, txRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/speakers`),
-          axios.get(`${API_BASE_URL}/votes/transactions`)
-        ]);
-        
-        setTotalPleton(speakersRes.data.length);
-        
-        const votesSum = txRes.data
-          .filter((tx: any) => tx.status === "Lunas")
-          .reduce((sum: number, tx: any) => sum + (tx.votesCount || 0), 0);
-        const financeSum = txRes.data
-          .filter((tx: any) => tx.status === "Lunas")
-          .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0);
-        
-        setTotalVotes(votesSum);
-        setTotalFinance(financeSum);
-      } catch (error) {
-        console.error("Gagal mengambil data statistik dashboard:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchStats();
+    fetchPleton();
+    fetchTransactions();
   }, []);
+
+  const totalPleton = pletonList.length;
+
+  const totalVotes = transactions
+    .filter((tx) => tx.status === "Lunas")
+    .reduce((sum, tx) => sum + (tx.votesCount || 0), 0);
+
+  const totalFinance = transactions
+    .filter((tx) => tx.status === "Lunas")
+    .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+
+  const loading = loadingPleton;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -103,9 +89,9 @@ export default function Dashboard() {
           <div className="flex items-center gap-6 text-left md:text-right">
             <div>
               <p className="text-green-55 text-[10px] font-bold tracking-widest uppercase mb-1">HARI INI</p>
-              <p className="font-bold text-sm sm:text-lg">Minggu, 21 Jun</p>
+              <p className="font-bold text-sm sm:text-lg">Minggu, 12 Jul</p>
             </div>
-            <button className="bg-white/20 hover:bg-white/30 transition-colors p-4 sm:p-5 rounded-2xl backdrop-blur-sm border border-white/20 shadow-sm">
+            <button className="bg-white/20 hover:bg-white/30 transition-colors p-4 sm:p-5 rounded-2xl backdrop-blur-sm border border-white/20 shadow-sm cursor-pointer">
               <Calendar size={20} className="text-white sm:w-6 sm:h-6" />
             </button>
           </div>
@@ -117,7 +103,7 @@ export default function Dashboard() {
         {[
           { label: "Keuangan", value: loading ? "..." : formatCurrency(totalFinance), icon: CreditCard, color: "bg-emerald-500", link: "/dashboard/finance" },
           { label: "Total Pleton", value: loading ? "..." : String(totalPleton), icon: Users, color: "bg-[#00a54f]", link: "/dashboard/pleton" },
-          { label: "Event Lomba", value: "0", icon: Trophy, color: "bg-purple-500", link: "#" },
+          { label: "Event Lomba", value: "1", icon: Trophy, color: "bg-purple-500", link: "#" },
         ].map((item, idx) => (
           <Link key={idx} to={item.link} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3 hover:shadow-md transition-shadow">
             <div className={`${item.color} p-2.5 rounded-xl`}>

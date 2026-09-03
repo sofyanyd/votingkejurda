@@ -1,68 +1,105 @@
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button"; 
-import { Ticket, Sparkles } from "lucide-react";
+import { Ticket, Sparkles, ShieldCheck, CreditCard, Zap } from "lucide-react";
 
 export default function Dukungan() {
   const navigate = useNavigate();
 
+  const steps = [
+    {
+      icon: Ticket,
+      title: "1. Pilih Tiket Vote",
+      desc: "Masuk ke menu Katalog Voting dan tentukan jumlah kuota otorisasi suara yang ingin kamu amankan."
+    },
+    {
+      icon: CreditCard,
+      title: "2. Checkout & Bayar",
+      desc: "Lakukan pembayaran secara instan dan aman menggunakan metode pembayaran standar QRIS atau e-wallet."
+    },
+    {
+      icon: Zap,
+      title: "3. Eksekusi Dukungan",
+      desc: "Gunakan kuota tiketmu untuk mendongkrak posisi pleton delegasi jagoanmu di papan klasemen live!"
+    }
+  ];
+
   return (
-    <div className="bg-slate-50 font-sans min-h-screen pb-20">
+    <div className="w-full bg-[#F8FAFC] font-sans min-h-screen pb-24 selection:bg-emerald-500 selection:text-white">
       
-      {/* ── 1. HERO SECTION ── */}
-      <section className="bg-white border-b border-slate-200 overflow-hidden relative">
-        {/* Dekorasi Background */}
-        <div className="absolute top-0 left-0 w-full h-full bg-emerald-50 blur-3xl opacity-40 pointer-events-none"></div>
+      {/* ── 1. HERO SECTION (DIBIKIN LEGA & CENTERED) ── */}
+      {/* Padding ditambah sedikit agar area atas bawah seimbang */}
+      <section className="relative w-full pt-20 pb-24 md:pt-28 md:pb-32 overflow-hidden flex flex-col items-center text-center px-6 border-b border-slate-100 bg-white">
+        
+        {/* Soft Background Glows */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-full pointer-events-none opacity-60">
+            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-emerald-100/50 blur-[100px] mix-blend-multiply"></div>
+            <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] rounded-full bg-teal-50/80 blur-[80px] mix-blend-multiply"></div>
+        </div>
 
-        {/* UBAH: Padding vertikal jadi py-12 di HP, rata tengah (text-center) di HP */}
-        <div className="max-w-6xl mx-auto px-6 py-12 md:py-24 flex flex-col md:flex-row items-center text-center md:text-left gap-8 md:gap-12 relative z-10">
-          <div className="flex-1 space-y-5 md:space-y-6 flex flex-col items-center md:items-start">
-            <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest border border-emerald-100">
-              <Sparkles size={16} className="text-emerald-500" /> Official Ticketing
-            </div>
-            
-            {/* UBAH: Ukuran font disesuaikan agar tidak terpotong aneh di HP kecil */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.1]">
-              Berikan <span className="text-emerald-600">Dukunganmu</span>
-            </h1>
-
-            <h2 className="text-lg md:text-2xl text-slate-700 font-bold">
-              Bantu Pleton Jagoanmu Meraih Gelar Juara Favorit!
-            </h2>
-
-            <p className="text-base md:text-lg text-slate-500 leading-relaxed max-w-lg mb-4 md:mb-8">
-              Dukungan dari kamu sangat berarti bagi para finalis. Beli tiket voting resmi dengan mudah layaknya berbelanja online. Pilih peserta favoritmu, tentukan jumlah suaranya, dan jadikan mereka juara!
-            </p>
-
-            {/* UBAH: Bungkus tombol dengan w-full di HP agar lebarnya membentang */}
-            <div className="pt-2 w-full sm:w-auto">
-              <Button 
-                variant="primary" 
-                onClick={() => navigate("/catalogvote")}
-                className="w-full flex items-center justify-center gap-2 shadow-emerald-200 shadow-lg py-3.5"
-              >
-                <Ticket size={20} />
-                BELI TIKET VOTE
-              </Button>
-            </div>
+        <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
+          <div className="inline-flex items-center gap-1.5 bg-emerald-50/80 border border-emerald-100/50 text-emerald-600 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest mb-6 shadow-sm">
+            <Sparkles size={14} /> Official Ticketing Portal
           </div>
-
-          {/* Visual Hero Kanan */}
-          <div className="hidden md:flex relative w-80 h-80 bg-gradient-to-tr from-emerald-600 to-emerald-400 rounded-[2rem] rotate-3 hover:rotate-0 transition-transform duration-500 items-center justify-center shadow-2xl border-4 border-white shrink-0">
-            <Ticket className="text-white opacity-90" size={120} />
-          </div>
+          
+          <h1 className="text-4xl md:text-6xl font-black text-slate-800 tracking-tight leading-[1.15] mb-6">
+            Otorisasi <span className="text-emerald-600">Dukunganmu</span>
+          </h1>
+          
+          <p className="text-slate-500 text-base md:text-lg leading-relaxed font-medium mb-10 max-w-2xl">
+            Bantu delegasi daerah kebanggaanmu merebut tahta Juara Favorit di KEJURDA 2026. Dapatkan tiket vote resmi dengan transparansi sistem penuh.
+          </p>
+          
+          <Button 
+              variant="primary" 
+              onClick={() => navigate("/catalogvote")}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-8 py-4 flex items-center justify-center gap-2 transition-all rounded-xl shadow-[0_8px_20px_rgb(16,185,129,0.2)] hover:-translate-y-1"
+          >
+              <Ticket size={20} />
+              BELI TIKET VOTE SEKARANG
+          </Button>
         </div>
       </section>
 
-      {/* ── 2. ABOUT SECTION ── */}
-      <section className="py-12 md:py-20 px-6 text-center max-w-4xl mx-auto md:-mt-8 relative z-20">
-        {/* UBAH: Padding dalam (p-6) di HP supaya teks punya ruang bernapas */}
-        <div className="bg-white rounded-3xl shadow-lg border border-slate-100 p-6 sm:p-10 md:p-16">
-            <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-4 md:mb-6">
-              Sistem <span className="text-emerald-600">Voting Terbuka</span>
-            </h2>
-            <p className="text-slate-500 leading-relaxed text-sm md:text-lg">
-              Kategori <strong className="text-slate-800">Juara Favorit</strong> sepenuhnya ditentukan oleh besarnya antusiasme dan dukungan dari suporter, alumni, maupun masyarakat umum. Dengan sistem pembelian tiket vote ini, kami menjamin keamanan data dan transparansi penuh dalam setiap langkah.
-            </p>
+      {/* ── 2. MEKANISME PEMBELIAN (POSISI AMAN, TIDAK NYEMPIL) ── */}
+      {/* Menggunakan margin standar (mt-12) agar ada jarak turun yang pas dan enak dilihat */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 relative z-20 mt-12 mb-12">
+        <div className="bg-white/90 backdrop-blur-xl rounded-[2rem] shadow-[0_10px_40px_rgb(0,0,0,0.04)] border border-slate-100 p-6 md:p-10">
+            <div className="text-center max-w-xl mx-auto mb-10">
+                <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-2">Mekanisme Pembelian</h2>
+                <p className="text-slate-500 text-sm">Tiga langkah mudah untuk mengamankan hak suara resmi.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {steps.map((item, index) => {
+                    const Icon = item.icon;
+                    return (
+                        <div key={index} className="bg-slate-50/60 border border-slate-100 rounded-2xl p-6 flex flex-col items-center text-center hover:bg-white hover:border-emerald-100 hover:shadow-lg hover:shadow-emerald-900/5 transition-all duration-300">
+                            <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 text-emerald-600 flex items-center justify-center mb-4 shadow-sm">
+                                <Icon size={22} />
+                            </div>
+                            <h3 className="font-black text-slate-800 text-base mb-2">{item.title}</h3>
+                            <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+      </section>
+
+      {/* ── 3. ABOUT / SYSTEM TRANSPARENCY SECTION ── */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+        <div className="bg-white rounded-[2rem] shadow-[0_4px_20px_rgb(0,0,0,0.02)] border border-slate-100 p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
+            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0 border border-emerald-100 shadow-sm">
+                <ShieldCheck size={32} />
+            </div>
+            <div className="text-center md:text-left">
+                <h3 className="text-xl md:text-2xl font-black text-slate-800 mb-3 tracking-tight">
+                    Sistem Voting Transparan & Kredibel
+                </h3>
+                <p className="text-slate-500 leading-relaxed text-sm md:text-base">
+                    Kategori <strong className="text-slate-700">Juara Favorit</strong> murni dikalkulasi dari akumulasi dukungan publik secara adil. Seluruh transaksi tiket dan pencatatan suara diamankan menggunakan enkripsi server tingkat lanjut untuk mencegah manipulasi data.
+                </p>
+            </div>
         </div>
       </section>
       
