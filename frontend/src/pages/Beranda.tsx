@@ -1,10 +1,34 @@
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
+import { API_BASE_URL } from "../config";
 import Button from "../components/ui/Button"; 
 import { Collapse } from "../components/ui/Collapse";
 import { ShieldCheck, Ticket, BarChart3, ChevronRight, Trophy, Flame, TrendingUp } from "lucide-react";
 
 export default function Dashboard() {
     const navigate = useNavigate(); 
+    const [top3Leaderboard, setTop3Leaderboard] = useState<any[]>([]);
+
+    useEffect(() => {
+      const fetchTop3 = async () => {
+        try {
+          const res = await axios.get(`${API_BASE_URL}/votes/leaderboard`);
+          const top3 = res.data.slice(0, 3).map((item: any) => ({
+            rank: item.rank,
+            name: item.nama,
+            region: item.instansi,
+            votes: item.votes.toLocaleString("id-ID"),
+            trend: `${item.percentage}% total suara`,
+            isHot: item.rank === 1
+          }));
+          setTop3Leaderboard(top3);
+        } catch (error) {
+          console.error("Gagal mengambil data Top 3:", error);
+        }
+      };
+      fetchTop3();
+    }, []);
 
     const faqItems = [
         { title: "Mengenai Voting KEJURDA 2026", description: "Sistem voting resmi dan eksklusif untuk menentukan Juara Favorit pada Lomba Keterampilan Baris Berbaris (LKBB) Tingkat Daerah (KEJURDA) Tahun 2026." },
@@ -36,13 +60,6 @@ export default function Dashboard() {
             link: "/leaderboard",
             icon: BarChart3
         },
-    ];
-
-    // Data Mockup untuk Top 3 (Vibes lebih ke Live Stats)
-    const top3Leaderboard = [
-        { rank: 1, name: "Garda Wira Bumi", region: "Kota A", votes: "3,120", trend: "+120 hari ini", isHot: true },
-        { rank: 2, name: "Paskibra SMAN 1", region: "Kabupaten B", votes: "2,450", trend: "+85 hari ini", isHot: false },
-        { rank: 3, name: "Satria Muda", region: "Kota C", votes: "1,890", trend: "+40 hari ini", isHot: false },
     ];
 
     return (

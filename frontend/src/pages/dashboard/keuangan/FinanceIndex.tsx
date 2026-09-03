@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { API_BASE_URL } from "../../../config";
 import { useQrCodeStore, type QrCode } from "../../../stores/useQrCodeStore";
 import { usePletonStore } from "../../../stores/pletonStore";
 import { useTransactionStore, type VoteTransaction } from "../../../stores/transactionStore";
@@ -63,23 +61,11 @@ export default function FinanceIndex() {
   const [offlineVotesQty, setOfflineVotesQty] = useState(1);
   const [offlineVoterEmail, setOfflineVoterEmail] = useState("");
 
-  const [topStandings, setTopStandings] = useState<any[]>([]);
-
-  const fetchLeaderboard = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/votes/leaderboard`);
-      setTopStandings(res.data);
-    } catch (e) {
-      console.error("Gagal mengambil leaderboard:", e);
-    }
-  };
-
   // Fetch data on mount
   useEffect(() => {
     fetchTransactions();
     fetchPleton();
     fetchQrCodes();
-    fetchLeaderboard();
   }, []);
 
   // Inject beautiful Google Font dynamically on component mount
@@ -101,7 +87,6 @@ export default function FinanceIndex() {
     showToast("Memproses verifikasi pembayaran...", "loading");
     const success = await approveTransaction(transactionCode);
     if (success) {
-      fetchLeaderboard();
       showToast("Pembayaran berhasil diverifikasi secara manual! Suara vote telah masuk ke sistem.", "success");
     } else {
       showToast("Gagal memverifikasi pembayaran. Coba lagi.", "error");
@@ -120,7 +105,6 @@ export default function FinanceIndex() {
     showToast("Menghapus transaksi...", "loading");
     const success = await deleteTransaction(transactionCode);
     if (success) {
-      fetchLeaderboard();
       showToast("Transaksi dan suara terkait berhasil dihapus!", "success");
     } else {
       showToast("Gagal menghapus transaksi. Coba lagi.", "error");
@@ -149,7 +133,6 @@ export default function FinanceIndex() {
     showToast("Memasukkan vote offline...", "loading");
     const success = await addOfflineVote(finalistId, namaKlub, offlineVotesQty, offlineVoterEmail.trim() || undefined);
     if (success) {
-      fetchLeaderboard();
       showToast("Vote offline berhasil dimasukkan ke sistem!", "success");
     } else {
       showToast("Gagal memasukkan vote offline. Coba lagi.", "error");
@@ -679,9 +662,9 @@ export default function FinanceIndex() {
             </div>
 
             <div className="mt-4 space-y-3">
-              {(topStandings.length > 0 ? topStandings : sortedReport).slice(0, 3).map((club, idx) => (
+              {sortedReport.slice(0, 3).map((club, idx) => (
                 <div
-                  key={club.id || club.nama || club.name}
+                  key={club.name}
                   className="flex items-center justify-between p-4 bg-emerald-50/20 hover:bg-emerald-50/40 border border-emerald-500/5 rounded-2xl transition-all"
                 >
                   <div className="flex items-center gap-3">
@@ -692,13 +675,13 @@ export default function FinanceIndex() {
                       {idx + 1}
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-slate-800">{club.nama || club.name}</div>
-                      <div className="text-xs font-semibold text-slate-450">{club.instansi || club.school}</div>
+                      <div className="text-sm font-bold text-slate-800">{club.name}</div>
+                      <div className="text-xs font-semibold text-slate-450">{club.school}</div>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-bold text-emerald-600">{club.votes} suara</div>
-                    <div className="text-xs text-slate-400 mt-0.5">{formatCurrency((club.votes || 0) * 3000)}</div>
+                    <div className="text-xs text-slate-400 mt-0.5">{formatCurrency(club.amount)}</div>
                   </div>
                 </div>
               ))}
