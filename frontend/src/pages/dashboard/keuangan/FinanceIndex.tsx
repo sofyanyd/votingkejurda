@@ -85,8 +85,12 @@ export default function FinanceIndex() {
     }
     
     showToast("Memproses verifikasi pembayaran...", "loading");
-    approveTransaction(transactionCode);
-    showToast("Pembayaran berhasil diverifikasi secara manual! Suara vote telah masuk ke sistem.", "success");
+    const success = await approveTransaction(transactionCode);
+    if (success) {
+      showToast("Pembayaran berhasil diverifikasi secara manual! Suara vote telah masuk ke sistem.", "success");
+    } else {
+      showToast("Gagal memverifikasi pembayaran. Coba lagi.", "error");
+    }
   };
 
   const handleDeleteTransaction = async (transactionCode: string, status: string) => {
@@ -99,8 +103,12 @@ export default function FinanceIndex() {
     }
 
     showToast("Menghapus transaksi...", "loading");
-    deleteTransaction(transactionCode);
-    showToast("Transaksi dan suara terkait berhasil dihapus!", "success");
+    const success = await deleteTransaction(transactionCode);
+    if (success) {
+      showToast("Transaksi dan suara terkait berhasil dihapus!", "success");
+    } else {
+      showToast("Gagal menghapus transaksi. Coba lagi.", "error");
+    }
   };
 
   const handleSubmitOfflineVotes = async (e: React.FormEvent) => {
@@ -116,14 +124,19 @@ export default function FinanceIndex() {
 
     const targetPleton = pletonList.find(p => String(p.id) === String(selectedPletonId));
     const namaKlub = targetPleton ? targetPleton.nama : "Pleton";
+    const finalistId = Number(selectedPletonId);
 
     if (!window.confirm(`Apakah Anda yakin ingin menambahkan ${offlineVotesQty} vote offline untuk Pleton ${namaKlub}?`)) {
       return;
     }
 
     showToast("Memasukkan vote offline...", "loading");
-    addOfflineVote(namaKlub, offlineVotesQty, offlineVoterEmail.trim() || undefined);
-    showToast("Vote offline berhasil dimasukkan ke sistem!", "success");
+    const success = await addOfflineVote(finalistId, namaKlub, offlineVotesQty, offlineVoterEmail.trim() || undefined);
+    if (success) {
+      showToast("Vote offline berhasil dimasukkan ke sistem!", "success");
+    } else {
+      showToast("Gagal memasukkan vote offline. Coba lagi.", "error");
+    }
     
     // Reset form
     setSelectedPletonId("");

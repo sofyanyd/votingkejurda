@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-// import axios from "axios"; // Dinonaktifkan sementara
-// import { API_BASE_URL } from "../config"; // Dinonaktifkan sementara
+import axios from "axios";
+import { API_BASE_URL } from "../config";
 import { Collapse } from "../components/ui/Collapse";
 import { Trophy, Activity, AlertCircle, Medal, Crown } from "lucide-react";
 
@@ -8,26 +8,22 @@ export default function Leaderboard() {
   const [standings, setStandings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Data Dummy Sementara
-  const dummyData = [
-    { id: 1, rank: 1, nama: "Garda Wira Bumi", instansi: "SMAN 1 Kota Tegal", votes: 4520, percentage: 85 },
-    { id: 2, rank: 2, nama: "Pasukan Satria Muda", instansi: "SMK 1 Slawi", votes: 3150, percentage: 65 },
-    { id: 3, rank: 3, nama: "Bhayangkara Taruna", instansi: "SMAN 2 Brebes", votes: 2890, percentage: 55 },
-    { id: 4, rank: 4, nama: "Paskibra Garuda Yaksa", instansi: "SMK 2 Kota Tegal", votes: 1450, percentage: 30 },
-    { id: 5, rank: 5, nama: "Bima Cakti", instansi: "SMAN 3 Slawi", votes: 1200, percentage: 25 },
-    { id: 6, rank: 6, nama: "Ksatria Pringgodani", instansi: "MAN 1 Tegal", votes: 850, percentage: 15 },
-    { id: 7, rank: 7, nama: "Laskar Bahari", instansi: "SUPM Tegal", votes: 420, percentage: 8 },
-  ];
-
   useEffect(() => {
-    const fetchStandings = () => {
-      setLoading(true);
-      setTimeout(() => {
-        setStandings(dummyData);
+    const fetchStandings = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/votes/leaderboard`);
+        setStandings(res.data);
+      } catch (error) {
+        console.error("Gagal mengambil data leaderboard:", error);
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
+
     fetchStandings();
+    // Polling setiap 10 detik untuk update real-time
+    const interval = setInterval(fetchStandings, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const leaderboardFaqs = [

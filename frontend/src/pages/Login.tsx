@@ -4,8 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Mail, Lock, ArrowLeft } from "lucide-react";
+import axios from "axios";
+import { API_BASE_URL } from "../config";
 import { useAuthStore } from "../stores/useAuthStore";
-import { useUserStore } from "../stores/useUserStore";
 import Button from "../components/ui/Button";
 
 const schema = z.object({
@@ -21,22 +22,24 @@ export default function Login() {
   });
 
   const login = useAuthStore((state) => state.login);
-  const userList = useUserStore((state) => state.userList);
 
   const onSubmit = async (data: any) => {
     setLoading(true);
-    setTimeout(() => {
-      // Find matching user from dummy user list or fallback admin
-      const matchedUser = userList.find(
-        (u) => u.email.toLowerCase() === data.email.toLowerCase()
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/auth/login`,
+        { email: data.email, password: data.password }
       );
-
-      const username = matchedUser ? matchedUser.username : data.email.split("@")[0];
-      localStorage.setItem("token", "dummy-jwt-token-12345");
-      login(username);
-      setLoading(false);
+      const { token, user } = res.data;
+      localStorage.setItem("token", token);
+      login(user?.name || data.email.split("@")[0]);
       navigate("/dashboard");
-    }, 600);
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || "Email atau password salah.";
+      alert(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

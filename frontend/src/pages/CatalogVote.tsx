@@ -48,24 +48,17 @@ export default function CatalogVote() {
     }
     setSubmitting(true);
     try {
-      const kodeUnik = Math.floor(100 + Math.random() * 900);
-      const grandTotal = totalPrice + kodeUnik;
+      const result = await addTransaction(
+        cart.map(i => ({ id: i.id, name: i.name, qty: i.qty, price: i.price }))
+      );
 
-      const mainItemName = cart.map(i => i.name).join(", ");
-      const totalVoteQty = cart.reduce((sum, i) => sum + i.qty, 0);
-
-      const transactionCode = addTransaction({
-        namaKlub: mainItemName,
-        voterEmail: "pembeli@forbasi.org",
-        votesCount: totalVoteQty,
-        amount: totalPrice,
-        kodeUnik,
-        grandTotal,
-        status: "Pending"
-      });
+      if (!result) {
+        alert("Gagal membuat tagihan pembayaran. Pastikan server backend berjalan.");
+        return;
+      }
 
       navigate("/checkout", { 
-        state: { cart, totalPrice, transactionCode, kodeUnik, grandTotal } 
+        state: { cart, totalPrice, transactionCode: result.transactionCode, kodeUnik: result.kodeUnik, grandTotal: result.grandTotal } 
       });
     } catch (error) {
       alert("Gagal membuat tagihan pembayaran.");
