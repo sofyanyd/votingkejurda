@@ -27,7 +27,7 @@ export default function CatalogVote() {
     fetchPleton();
   }, []);
 
-  const participants: Participant[] = pletonList.map((item) => {
+  const participants: (Participant & { categoryId: number })[] = pletonList.map((item) => {
     let subName = item.bidang;
     if (item.bidang.includes(" - ")) {
       subName = item.bidang.split(" - ")[1];
@@ -37,9 +37,17 @@ export default function CatalogVote() {
       name: item.nama,
       subName: subName,
       price: 3000,
-      imageUrl: item.foto_url || `https://via.placeholder.com/300x300.png?text=${encodeURIComponent(item.nama)}`
+      imageUrl: item.foto_url || `https://via.placeholder.com/300x300.png?text=${encodeURIComponent(item.nama)}`,
+      categoryId: item.category_id || 1
     };
   });
+
+  const categories = [
+    { id: 1, name: "Kategori: SMA / SMK / MA Sederajat" },
+    { id: 2, name: "Kategori: SMP / MTs Sederajat" },
+    { id: 3, name: "Kategori: SD / MI Sederajat" },
+    { id: 4, name: "Kategori: Purna / Umum" },
+  ];
 
   const handleSubmitVotes = async () => {
     if (IS_VOTING_CLOSED) {
@@ -96,7 +104,6 @@ export default function CatalogVote() {
       <div className="flex flex-col md:flex-row w-full h-full flex-1 bg-transparent md:bg-white md:rounded-[2rem] md:shadow-[0_10px_40px_rgb(0,0,0,0.04)] md:border border-slate-100 overflow-hidden relative">
         
         {/* ── KATALOG PESERTA (Area yang BISA di-scroll) ── */}
-        {/* DIUBAH: Diberi overflow-y-auto agar hanya bagian ini yang ter-scroll */}
         <div className="w-full h-full md:bg-[#F8FAFC]/50 overflow-y-auto p-4 md:p-8 pb-[140px] md:pb-8 transition-all duration-300">
           
           <button 
@@ -113,7 +120,7 @@ export default function CatalogVote() {
             <h1 className="text-2xl md:text-4xl font-black text-slate-800 mt-3 tracking-tight">
               Katalog <span className="text-emerald-600">Finalis & Kandidat</span>
             </h1>
-            <p className="text-slate-500 text-xs md:text-sm mt-1.5 font-medium">Pilih delegasi daerah jagoanmu dan tentukan jumlah kuota dukungan suara secara transparan.</p>
+            <p className="text-slate-500 text-xs md:text-sm mt-1.5 font-medium">Pilih delegasi daerah jagoanmu dari berbagai kategori dan gabungkan dalam 1 transaksi sekaligus.</p>
           </div>
 
           {IS_VOTING_CLOSED && (
@@ -144,53 +151,71 @@ export default function CatalogVote() {
               Katalog kosong.
             </div>
           ) : (
-            <div className={`grid grid-cols-2 lg:grid-cols-${hasItems ? '3' : '4'} xl:grid-cols-${hasItems ? '4' : '5'} gap-4 md:gap-6 transition-all duration-300`}>
-              {participants.map((p) => {
-                const qty = getQty(p.id);
+            <div className="space-y-10">
+              {categories.map((cat) => {
+                const catParticipants = participants.filter((p) => p.categoryId === cat.id);
+                if (catParticipants.length === 0) return null;
                 return (
-                  <div key={p.id} className="bg-white rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.02)] border border-slate-100/80 flex flex-col overflow-hidden group hover:shadow-xl hover:border-emerald-200 transition-all duration-300">
-                    <div className="relative overflow-hidden bg-slate-100 aspect-square">
-                      <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div key={cat.id} className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                      <h2 className="text-lg md:text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+                        {cat.name}
+                      </h2>
+                      <span className="text-xs font-bold text-slate-400">{catParticipants.length} Tim</span>
                     </div>
-                    
-                    <div className="p-4 md:p-5 flex flex-col flex-grow">
-                      <h3 className="font-black text-slate-800 text-xs md:text-sm leading-tight line-clamp-1" title={p.name}>{p.name}</h3>
-                      <p className="text-[10px] md:text-xs text-slate-400 truncate mt-1 font-semibold">{p.subName}</p>
-                      <p className="font-black text-emerald-600 text-sm md:text-base mt-2.5 mb-4">Rp {p.price.toLocaleString("id-ID")}</p>
 
-                      <div className="mt-auto">
-                        {IS_VOTING_CLOSED ? (
-                          <button
-                            disabled
-                            className="w-full py-3 text-xs font-bold rounded-2xl bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed text-center"
-                          >
-                            Ditutup
-                          </button>
-                        ) : qty === 0 ? (
-                          <button 
-                            onClick={() => handleUpdateQty(p, 1)}
-                            className="w-full py-3 text-xs font-black rounded-2xl bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-100 transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
-                          >
-                            <Ticket size={15} /> + Vote
-                          </button>
-                        ) : (
-                          <div className="flex items-center justify-between bg-emerald-50/80 rounded-2xl p-1.5 border border-emerald-100 shadow-inner">
-                            <button 
-                              onClick={() => handleUpdateQty(p, -1)}
-                              className="w-8 h-8 bg-white rounded-xl flex items-center justify-center text-emerald-600 shadow-sm hover:bg-emerald-100 cursor-pointer transition-colors"
-                            >
-                              <Minus size={14} />
-                            </button>
-                            <span className="font-black text-emerald-900 text-xs md:text-sm">{qty}</span>
-                            <button 
-                              onClick={() => handleUpdateQty(p, 1)}
-                              className="w-8 h-8 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-sm hover:bg-emerald-700 cursor-pointer transition-colors"
-                            >
-                              <Plus size={14} />
-                            </button>
+                    <div className={`grid grid-cols-2 lg:grid-cols-${hasItems ? '3' : '4'} xl:grid-cols-${hasItems ? '4' : '5'} gap-4 md:gap-6 transition-all duration-300`}>
+                      {catParticipants.map((p) => {
+                        const qty = getQty(p.id);
+                        return (
+                          <div key={p.id} className="bg-white rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.02)] border border-slate-100/80 flex flex-col overflow-hidden group hover:shadow-xl hover:border-emerald-200 transition-all duration-300">
+                            <div className="relative overflow-hidden bg-slate-100 aspect-square">
+                              <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                            </div>
+                            
+                            <div className="p-4 md:p-5 flex flex-col flex-grow">
+                              <h3 className="font-black text-slate-800 text-xs md:text-sm leading-tight line-clamp-1" title={p.name}>{p.name}</h3>
+                              <p className="text-[10px] md:text-xs text-slate-400 truncate mt-1 font-semibold">{p.subName}</p>
+                              <p className="font-black text-emerald-600 text-sm md:text-base mt-2.5 mb-4">Rp {p.price.toLocaleString("id-ID")}</p>
+
+                              <div className="mt-auto">
+                                {IS_VOTING_CLOSED ? (
+                                  <button
+                                    disabled
+                                    className="w-full py-3 text-xs font-bold rounded-2xl bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed text-center"
+                                  >
+                                    Ditutup
+                                  </button>
+                                ) : qty === 0 ? (
+                                  <button 
+                                    onClick={() => handleUpdateQty(p, 1)}
+                                    className="w-full py-3 text-xs font-black rounded-2xl bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-100 transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                                  >
+                                    <Ticket size={15} /> + Vote
+                                  </button>
+                                ) : (
+                                  <div className="flex items-center justify-between bg-emerald-50/80 rounded-2xl p-1.5 border border-emerald-100 shadow-inner">
+                                    <button 
+                                      onClick={() => handleUpdateQty(p, -1)}
+                                      className="w-8 h-8 bg-white rounded-xl flex items-center justify-center text-emerald-600 shadow-sm hover:bg-emerald-100 cursor-pointer transition-colors"
+                                    >
+                                      <Minus size={14} />
+                                    </button>
+                                    <span className="font-black text-emerald-900 text-xs md:text-sm">{qty}</span>
+                                    <button 
+                                      onClick={() => handleUpdateQty(p, 1)}
+                                      className="w-8 h-8 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-sm hover:bg-emerald-700 cursor-pointer transition-colors"
+                                    >
+                                      <Plus size={14} />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        )}
-                      </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );

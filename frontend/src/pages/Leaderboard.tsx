@@ -7,6 +7,7 @@ import { Trophy, Activity, AlertCircle, Medal, Crown } from "lucide-react";
 export default function Leaderboard() {
   const [standings, setStandings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<number | "Semua">("Semua");
 
   useEffect(() => {
     const fetchStandings = async () => {
@@ -26,6 +27,14 @@ export default function Leaderboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const categoryOptions = [
+    { id: "Semua", label: "Semua Kategori" },
+    { id: 1, label: "SMA Sederajat" },
+    { id: 2, label: "SMP Sederajat" },
+    { id: 3, label: "SD Sederajat" },
+    { id: 4, label: "Purna / Umum" },
+  ];
+
   const leaderboardFaqs = [
     {
       title: "Seberapa akurat pergerakan data di Leaderboard ini?",
@@ -41,8 +50,17 @@ export default function Leaderboard() {
     },
   ];
 
-  const topThree = standings.slice(0, 3);
-  const remainingStandings = standings.slice(3);
+  // Filter standings based on selectedCategory and assign fair ranks within the selected view
+  const filteredStandings = (selectedCategory === "Semua"
+    ? standings
+    : standings.filter(item => item.category_id === Number(selectedCategory))
+  ).map((item, idx) => ({
+    ...item,
+    displayRank: selectedCategory === "Semua" ? (item.categoryRank || idx + 1) : idx + 1
+  }));
+
+  const topThree = filteredStandings.slice(0, 3);
+  const remainingStandings = filteredStandings.slice(3);
 
   return (
     // Kembali menggunakan background terang bersih (bg-[#F8FAFC]) selaras dengan homepage
@@ -72,6 +90,26 @@ export default function Leaderboard() {
               <p className="text-slate-400 text-xs md:text-sm max-w-lg mx-auto font-medium">
                 Pantau pergerakan suara KEJURDA 2026 secara real-time. Setiap otorisasi suara dapat mengubah sejarah.
               </p>
+
+              {/* ── CATEGORY FILTER TABS ── */}
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-5 mb-6">
+                {categoryOptions.map((cat) => {
+                  const isActive = selectedCategory === cat.id;
+                  return (
+                    <button
+                      key={String(cat.id)}
+                      onClick={() => setSelectedCategory(cat.id as any)}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
+                        isActive
+                          ? "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30 scale-[1.03]"
+                          : "bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700/60"
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* ── PODIUM DISPLAY (COMPACT & PAS) ── */}
@@ -80,9 +118,9 @@ export default function Leaderboard() {
                   <div className="w-7 h-7 border-3 border-slate-800 border-t-emerald-500 rounded-full animate-spin mb-2"></div>
                   <p className="text-slate-400 font-semibold uppercase tracking-widest text-[10px]">Menyinkronkan Server...</p>
               </div>
-            ) : standings.length === 0 ? (
+            ) : filteredStandings.length === 0 ? (
               <div className="text-center py-6 text-slate-400 font-medium bg-slate-800/50 rounded-2xl border border-slate-700/50 max-w-md mx-auto text-sm">
-                Sistem belum menerima otorisasi suara apapun.
+                Sistem belum menerima otorisasi suara untuk kategori ini.
               </div>
             ) : (
               <div className="flex flex-row items-end justify-center gap-3 md:gap-5 max-w-3xl mx-auto px-2">
@@ -172,12 +210,19 @@ export default function Leaderboard() {
                   
                   {/* Rank Number */}
                   <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-xl bg-white border border-slate-200 group-hover:border-emerald-200 flex items-center justify-center shadow-sm transition-colors">
-                    <span className="font-black text-slate-400 group-hover:text-emerald-600 text-sm md:text-base">#{team.rank}</span>
+                    <span className="font-black text-slate-400 group-hover:text-emerald-600 text-sm md:text-base">#{team.displayRank}</span>
                   </div>
                   
                   {/* Team Info */}
                   <div className="ml-4 md:ml-5 flex-grow min-w-0">
-                    <h3 className="font-black text-slate-800 text-xs md:text-sm truncate group-hover:text-emerald-700 transition-colors">{team.nama}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-black text-slate-800 text-xs md:text-sm truncate group-hover:text-emerald-700 transition-colors">{team.nama}</h3>
+                      {team.category_nama && (
+                        <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full shrink-0 border border-slate-200/60">
+                          {team.category_nama}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate mt-0.5">{team.instansi}</p>
                     
                     {/* Progress Bar */}

@@ -23,37 +23,66 @@ export const getLeaderboard = async (req: Request, res: Response) => {
 
     const teams = await prisma.teams.findMany({
       include: {
-        votes: true
+        votes: true,
+        categories: true
       }
     });
 
-    const totalVotes = teams.reduce((acc, f) => acc + f.votes.length, 0);
+    const totalVotesOverall = teams.reduce((acc, f) => acc + f.votes.length, 0);
+
+    // Group votes by category to calculate category totals
+    const categoryTotals: { [key: number]: number } = {};
+    teams.forEach(f => {
+      categoryTotals[f.category_id] = (categoryTotals[f.category_id] || 0) + f.votes.length;
+    });
 
     const standings = teams.map(f => {
       const votesCount = f.votes.length;
-      const percentage = totalVotes > 0 ? Math.round((votesCount / totalVotes) * 100) : 0;
+      const totalCatVotes = categoryTotals[f.category_id] || 0;
+      const percentage = totalCatVotes > 0 ? Math.round((votesCount / totalCatVotes) * 100) : 0;
       return {
         id: f.id,
         nama: f.nama,
         instansi: f.asal_sekolah,
+        category_id: f.category_id,
+        category_nama: f.categories ? f.categories.nama : "Lainnya",
         votes: votesCount,
         percentage
       };
     });
 
-    // Sort by votes descending
-    standings.sort((a, b) => b.votes - a.votes);
+    // Group teams by category to assign per-category rank
+    const teamsByCategory: { [key: number]: typeof standings } = {};
+    standings.forEach(item => {
+      if (!teamsByCategory[item.category_id]) {
+        teamsByCategory[item.category_id] = [];
+      }
+      teamsByCategory[item.category_id].push(item);
+    });
 
-    // Assign rank positions
-    const standingsWithRank = standings.map((item, idx) => ({
-      ...item,
-      rank: idx + 1
-    }));
+    const finalStandings: any[] = [];
+    Object.values(teamsByCategory).forEach(group => {
+      // Sort descending by votes inside each category
+      group.sort((a, b) => b.votes - a.votes);
+      group.forEach((item, idx) => {
+        finalStandings.push({
+          ...item,
+          categoryRank: idx + 1, // Fair rank inside category
+          rank: idx + 1
+        });
+      });
+    });
 
-    leaderboardCache = standingsWithRank;
+    // Sort final output by category_id then categoryRank
+    finalStandings.sort((a, b) => {
+      if (a.category_id !== b.category_id) return a.category_id - b.category_id;
+      return a.categoryRank - b.categoryRank;
+    });
+
+    leaderboardCache = finalStandings;
     leaderboardCacheTime = now;
 
-    res.status(200).json(standingsWithRank);
+    res.status(200).json(finalStandings);
   } catch (error) {
     res.status(500).json({ message: "Gagal memuat papan klasemen", error });
   }
