@@ -26,7 +26,7 @@ app.use("/auth", authRoute);
 app.use("/votes", voteRoute);
 app.use("/qrcodes", qrRoute);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running di port ${PORT}`);
+const PORT = Number(process.env.PORT) || 3000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running di port ${PORT} on 0.0.0.0`);
 });
