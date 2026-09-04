@@ -10,7 +10,24 @@ import qrRoute from "./routes/qrRoute.js";
 
 const app = express();
 
-app.use(cors());
+// Explicit CORS Configuration for Vercel & All Origins
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+}));
+
+// Failsafe CORS Header Middleware
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
@@ -29,7 +46,7 @@ app.use("/auth", authRoute);
 app.use("/votes", voteRoute);
 app.use("/qrcodes", qrRoute);
 
-// Global error handling middleware so uncaught route exceptions don't crash Express
+// Global error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error("Express Error Handler caught:", err);
   res.status(500).json({ message: "Server error", error: err?.message || String(err) });
