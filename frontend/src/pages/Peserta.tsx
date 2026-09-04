@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
-import Button from "../components/ui/Button";
+import Button from "../components/ui/Button"; 
 import { Collapse } from "../components/ui/Collapse";
 import { Calendar, MapPin, CheckCircle, Users, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 
@@ -74,8 +74,8 @@ export default function Peserta() {
   return (
     <div className="w-full bg-[#F8FAFC] font-sans min-h-screen pb-24 selection:bg-emerald-500 selection:text-white">
 
-      {/* ── 1. HERO SECTION (Diberi pt-32 / pt-36 agar turun dan tidak tertutup header) ── */}
-      <section className="relative w-full pt-32 pb-16 md:pt-36 md:pb-20 overflow-hidden flex flex-col items-center text-center px-6 border-b border-slate-100 bg-white">
+      {/* ── 1. HERO SECTION ── */}
+      <section className="relative w-full pt-36 pb-28 md:pt-44 md:pb-32 overflow-hidden flex flex-col items-center text-center px-6 border-b border-slate-100 bg-white">
         
         {/* Soft Background Glows */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-full pointer-events-none opacity-60">
@@ -105,8 +105,8 @@ export default function Peserta() {
         </div>
       </section>
 
-      {/* ── 2. FLOATING INFO BAR ── */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 relative z-20 -mt-8 md:-mt-10 mb-12">
+      {/* ── 2. FLOATING INFO BAR (Dinaikkan lebih tinggi menggunakan -mt-8 md:-mt-10) ── */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 relative z-20 -mt-12 md:-mt-16 mb-12">
         <div className="bg-white/90 backdrop-blur-xl rounded-[2rem] shadow-[0_10px_40px_rgb(0,0,0,0.04)] border border-white p-2.5 flex flex-col md:flex-row gap-2 md:gap-0 divide-y md:divide-y-0 md:divide-x divide-slate-100">
           {[
             { icon: Calendar, title: "TANGGAL", val: "12 Juli 2026" },

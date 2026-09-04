@@ -26,9 +26,8 @@ export default function Dukungan() {
   return (
     <div className="w-full bg-[#F8FAFC] font-sans min-h-screen pb-24 selection:bg-emerald-500 selection:text-white">
       
-      {/* ── 1. HERO SECTION (DIBIKIN LEGA & CENTERED) ── */}
-      {/* Padding ditambah sedikit agar area atas bawah seimbang */}
-      <section className="relative w-full pt-20 pb-24 md:pt-28 md:pb-32 overflow-hidden flex flex-col items-center text-center px-6 border-b border-slate-100 bg-white">
+      {/* ── 1. HERO SECTION (Disamakan padding bawahnya pb-36 md:pb-44 agar simetris dengan halaman lain) ── */}
+      <section className="relative w-full pt-36 pb-36 md:pt-44 md:pb-44 overflow-hidden flex flex-col items-center text-center px-6 border-b border-slate-100 bg-white">
         
         {/* Soft Background Glows */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-full pointer-events-none opacity-60">
@@ -60,8 +59,7 @@ export default function Dukungan() {
         </div>
       </section>
 
-      {/* ── 2. MEKANISME PEMBELIAN (POSISI AMAN, TIDAK NYEMPIL) ── */}
-      {/* Menggunakan margin standar (mt-12) agar ada jarak turun yang pas dan enak dilihat */}
+      {/* ── 2. MEKANISME PEMBELIAN ── */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 relative z-20 mt-12 mb-12">
         <div className="bg-white/90 backdrop-blur-xl rounded-[2rem] shadow-[0_10px_40px_rgb(0,0,0,0.04)] border border-slate-100 p-6 md:p-10">
             <div className="text-center max-w-xl mx-auto mb-10">

@@ -65,8 +65,8 @@ export default function Dashboard() {
     return (
         <div className="bg-gray-50 font-sans min-h-screen pb-20 selection:bg-emerald-500 selection:text-white">
             
-            {/* HERO SECTION - TEMA GELAP (FOKUS TIPOGRAFI & CENTERED) */}
-            <section className="relative bg-emerald-900 pt-16 pb-36 lg:pt-20 lg:pb-48 overflow-hidden flex flex-col justify-center">
+            {/* HERO SECTION - Padding bawah diperbesar (pb-36 md:pb-44) agar area hijau ke bawah lebih lega */}
+            <section className="relative bg-emerald-900 pt-28 pb-36 md:pt-36 md:pb-44 overflow-hidden flex flex-col justify-center">
                 {/* Background Pattern / Grid modern */}
                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
                 
@@ -78,7 +78,7 @@ export default function Dashboard() {
 
                 <div className="relative z-10 w-full px-6 md:px-12 max-w-4xl mx-auto flex flex-col items-center text-center">
                     
-                    <div className="inline-flex items-center gap-2 bg-emerald-800/50 border border-emerald-700/50 backdrop-blur-sm text-emerald-300 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest mb-6 mt-4">
+                    <div className="inline-flex items-center gap-2 bg-emerald-800/50 border border-emerald-700/50 backdrop-blur-sm text-emerald-300 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest mb-6">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                         Live Voting Berlangsung
                     </div>
@@ -116,7 +116,7 @@ export default function Dashboard() {
             </section>
 
             {/* SEKSI LIVE STATS TOP 3 (Menembus antara Hero & Body) */}
-            <section className="px-6 max-w-6xl mx-auto -mt-24 md:-mt-16 relative z-20">
+            <section className="px-6 max-w-6xl mx-auto -mt-24 md:-mt-20 relative z-20">
                 <div className="bg-white rounded-2xl shadow-2xl shadow-emerald-900/10 border border-gray-100 overflow-hidden">
                     
                     <div className="bg-gray-50/50 border-b border-gray-100 px-6 md:px-8 py-5 flex flex-col md:flex-row justify-between items-center gap-4">

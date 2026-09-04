@@ -65,9 +65,8 @@ export default function Leaderboard() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans pb-24 selection:bg-emerald-500 selection:text-white flex flex-col">
       
-      {/* ── 1. HERO SECTION: FULL WIDTH DARK ARENA ── */}
-      {/* Background melebar penuh seperti di Beranda, padding atas ditambahkan agar aman dari fixed header */}
-      <section className="relative w-full bg-slate-950 pt-28 pb-32 md:pt-36 md:pb-40 border-b border-slate-900 overflow-hidden flex flex-col items-center">
+      {/* ── 1. HERO SECTION: FULL WIDTH DARK ARENA (Disamakan pt-36 pb-28 md:pt-44 md:pb-32 agar simetris) ── */}
+      <section className="relative w-full bg-slate-950 pt-36 pb-28 md:pt-44 md:pb-32 border-b border-slate-900 overflow-hidden flex flex-col items-center">
         
         {/* Soft Background Glows & Patterns */}
         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#10b981 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
@@ -178,9 +177,8 @@ export default function Leaderboard() {
         </div>
       </section>
 
-      {/* ── 2. DETAIL RANKING (FLOATING OVERLAP CARD) ── */}
-      {/* Menggunakan margin minus (-mt-16 md:-mt-24) agar menumpuk elegan dengan Hero section */}
-      <section className="w-full max-w-4xl mx-auto px-4 sm:px-6 relative z-20 -mt-16 md:-mt-20">
+      {/* ── 2. DETAIL RANKING (FLOATING OVERLAP CARD - Disamakan -mt-8 md:-mt-10 agar simetris posisinya) ── */}
+      <section className="w-full max-w-4xl mx-auto px-4 sm:px-6 relative z-20 -mt-8 md:-mt-10">
         <div className="bg-white/95 backdrop-blur-xl rounded-[2rem] shadow-[0_20px_50px_rgb(0,0,0,0.08)] border border-white overflow-hidden p-2 md:p-4">
           
           <div className="px-4 py-5 md:px-6 md:py-6 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
