@@ -19,7 +19,7 @@ const getApiBaseUrl = () => {
   }
   
   // Production Railway Backend URL
-  return "https://votingforbasi-production.up.railway.app";
+  return import.meta.env.VITE_API_URL || "https://votingkejurda-production.up.railway.app";
 };
 
 export const API_BASE_URL = getApiBaseUrl();

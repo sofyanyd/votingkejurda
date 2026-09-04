@@ -55,7 +55,7 @@ export default function Login() {
       <div className="w-full bg-white rounded-3xl shadow-lg border border-slate-200 p-8 md:p-10">
         <div className="mb-6">
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Admin Login</h1>
-          <p className="text-slate-500 text-xs mt-1">Masukkan kredensial akses Anda (Default: admin@gmail.com / 12345678).</p>
+          <p className="text-slate-500 text-xs mt-1">Masukkan kredensial akses Anda.</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
