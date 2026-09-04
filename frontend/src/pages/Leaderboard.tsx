@@ -13,7 +13,7 @@ export default function Leaderboard() {
     const fetchStandings = async () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/votes/leaderboard`);
-        setStandings(res.data);
+        setStandings(Array.isArray(res.data) ? res.data : []);
       } catch (error) {
         console.error("Gagal mengambil data leaderboard:", error);
       } finally {
@@ -51,9 +51,10 @@ export default function Leaderboard() {
   ];
 
   // Filter standings based on selectedCategory and assign fair ranks within the selected view
+  const validStandings = Array.isArray(standings) ? standings : [];
   const filteredStandings = (selectedCategory === "Semua"
-    ? standings
-    : standings.filter(item => item.category_id === Number(selectedCategory))
+    ? validStandings
+    : validStandings.filter(item => item.category_id === Number(selectedCategory))
   ).map((item, idx) => ({
     ...item,
     displayRank: selectedCategory === "Semua" ? (item.categoryRank || idx + 1) : idx + 1

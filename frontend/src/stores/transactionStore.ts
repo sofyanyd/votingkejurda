@@ -30,7 +30,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   fetchTransactions: async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/votes/transactions`);
-      set({ transactions: res.data });
+      set({ transactions: Array.isArray(res.data) ? res.data : [] });
     } catch (error) {
       console.error("Gagal mengambil transaksi:", error);
     }

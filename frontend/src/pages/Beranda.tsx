@@ -14,12 +14,13 @@ export default function Dashboard() {
       const fetchTop3 = async () => {
         try {
           const res = await axios.get(`${API_BASE_URL}/votes/leaderboard`);
-          const top3 = res.data.slice(0, 3).map((item: any) => ({
+          const data = Array.isArray(res.data) ? res.data : [];
+          const top3 = data.slice(0, 3).map((item: any) => ({
             rank: item.rank,
             name: item.nama,
             region: item.instansi,
-            votes: item.votes.toLocaleString("id-ID"),
-            trend: `${item.percentage}% total suara`,
+            votes: (item.votes || 0).toLocaleString("id-ID"),
+            trend: `${item.percentage || 0}% total suara`,
             isHot: item.rank === 1
           }));
           setTop3Leaderboard(top3);

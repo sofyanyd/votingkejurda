@@ -31,11 +31,13 @@ export default function Dashboard() {
 
   const totalPleton = pletonList.length;
 
-  const totalVotes = transactions
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+
+  const totalVotes = safeTransactions
     .filter((tx) => tx.status === "Lunas")
     .reduce((sum, tx) => sum + (tx.votesCount || 0), 0);
 
-  const totalFinance = transactions
+  const totalFinance = safeTransactions
     .filter((tx) => tx.status === "Lunas")
     .reduce((sum, tx) => sum + (tx.amount || 0), 0);
 

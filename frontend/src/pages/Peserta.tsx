@@ -25,7 +25,8 @@ export default function Peserta() {
     const fetchFinalists = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/speakers`);
-        const mapped = response.data.map((item: any) => {
+        const rawData = Array.isArray(response.data) ? response.data : [];
+        const mapped = rawData.map((item: any) => {
           let no_urut = "01";
           let role = item.bidang;
           if (item.bidang.startsWith("No. ") && item.bidang.includes(" - ")) {

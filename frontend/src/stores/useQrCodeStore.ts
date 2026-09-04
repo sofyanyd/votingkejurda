@@ -27,7 +27,7 @@ export const useQrCodeStore = create<QrState>((set, get) => ({
     set({ loading: true });
     try {
       const res = await axios.get(`${API_BASE_URL}/qrcodes`);
-      set({ qrList: res.data, loading: false });
+      set({ qrList: Array.isArray(res.data) ? res.data : [], loading: false });
     } catch (error) {
       console.error("Gagal mengambil QR codes:", error);
       set({ loading: false });
