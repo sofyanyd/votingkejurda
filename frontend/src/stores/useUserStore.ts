@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import axios from "axios";
+import { API_BASE_URL } from "../config";
 
 export interface UserAdmin {
   id: string;
@@ -17,57 +19,51 @@ interface UserState {
   deleteUser: (id: string) => Promise<boolean>;
 }
 
-const DEFAULT_USERS: UserAdmin[] = [
-  { id: "1", username: "Administrator", email: "admin@gmail.com", password: "12345678", role: "admin" },
-  { id: "2", username: "Pranada Alfath", email: "pranadaalfath@gmail.com", password: "24090027", role: "voter" }
-];
-
-const getStoredUsers = (): UserAdmin[] => {
-  const stored = localStorage.getItem("dummy_users");
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch (e) {
-      console.error(e);
-    }
-  }
-  return DEFAULT_USERS;
-};
-
-const saveUsers = (users: UserAdmin[]) => {
-  localStorage.setItem("dummy_users", JSON.stringify(users));
-};
-
 export const useUserStore = create<UserState>((set, get) => ({
-  userList: getStoredUsers(),
+  userList: [],
   loading: false,
 
   fetchUsers: async () => {
     set({ loading: true });
-    set({ userList: getStoredUsers(), loading: false });
+    try {
+      const res = await axios.get(`${API_BASE_URL}/auth/users`);
+      set({ userList: Array.isArray(res.data) ? res.data : [], loading: false });
+    } catch (error) {
+      console.error("Gagal mengambil data user:", error);
+      set({ loading: false });
+    }
   },
 
   addUser: async (user) => {
-    const list = get().userList;
-    const newId = String(Date.now());
-    const newItem: UserAdmin = { id: newId, role: "admin", ...user };
-    const updated = [...list, newItem];
-    saveUsers(updated);
-    set({ userList: updated });
-    return true;
+    try {
+      const res = await axios.post(`${API_BASE_URL}/auth/users`, user);
+      set({ userList: [...get().userList, res.data] });
+      return true;
+    } catch (error) {
+      console.error("Gagal menambah user admin:", error);
+      return false;
+    }
   },
 
   updateUser: async (id, updatedData) => {
-    const updated = get().userList.map(u => u.id === id ? { ...u, ...updatedData } : u);
-    saveUsers(updated);
-    set({ userList: updated });
-    return true;
+    try {
+      const res = await axios.put(`${API_BASE_URL}/auth/users/${id}`, updatedData);
+      set({ userList: get().userList.map(u => u.id === id ? { ...u, ...res.data } : u) });
+      return true;
+    } catch (error) {
+      console.error("Gagal memperbarui user admin:", error);
+      return false;
+    }
   },
 
   deleteUser: async (id) => {
-    const updated = get().userList.filter(u => u.id !== id);
-    saveUsers(updated);
-    set({ userList: updated });
-    return true;
+    try {
+      await axios.delete(`${API_BASE_URL}/auth/users/${id}`);
+      set({ userList: get().userList.filter(u => u.id !== id) });
+      return true;
+    } catch (error) {
+      console.error("Gagal menghapus user admin:", error);
+      return false;
+    }
   },
 }));
