@@ -11,11 +11,12 @@ import { useTransactionStore } from "../stores/transactionStore";
 export default function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { cart, totalPrice, transactionCode } = location.state || { 
-    cart: [], 
-    totalPrice: 0, 
-    transactionCode: ""
-  };
+
+  const cart = location.state?.cart || [];
+  const totalPrice = location.state?.totalPrice || 0;
+  const [transactionCode] = useState<string>(() => 
+    location.state?.transactionCode || `PAY-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`
+  );
 
   const { qrList, fetchQrCodes } = useQrCodeStore();
   const addTransaction = useTransactionStore((state) => state.addTransaction);
