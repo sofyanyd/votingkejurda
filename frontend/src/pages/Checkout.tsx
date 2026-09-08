@@ -6,6 +6,7 @@ import { API_BASE_URL } from "../config";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import { useQrCodeStore } from "../stores/useQrCodeStore";
+import { useTransactionStore } from "../stores/transactionStore";
 
 export default function Checkout() {
   const location = useLocation();
@@ -17,6 +18,8 @@ export default function Checkout() {
   };
 
   const { qrList, fetchQrCodes } = useQrCodeStore();
+  const addTransaction = useTransactionStore((state) => state.addTransaction);
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -24,18 +27,31 @@ export default function Checkout() {
     fetchQrCodes();
   }, []);
 
-  const activeQr = qrList.find(q => q.status === "Aktif");
+  const activeQr = Array.isArray(qrList) ? qrList.find(q => q.status === "Aktif") : undefined;
 
-  const handleConfirmTransfer = () => {
+  const handleConfirmTransfer = async () => {
+    if (loading || success) return;
     setLoading(true);
-    // Simulate a brief premium loading animation
-    setTimeout(() => {
+    try {
+      const result = await addTransaction(
+        cart.map((i: any) => ({ id: i.id, name: i.name, qty: i.qty, price: i.price }))
+      );
+
+      if (!result) {
+        alert("Gagal mendaftarkan tagihan. Pastikan koneksi backend berjalan.");
+        setLoading(false);
+        return;
+      }
+
       setSuccess(true);
-      // Redirect to leaderboard after showing success message
       setTimeout(() => {
         navigate("/leaderboard");
-      }, 7000);
-    }, 1200);
+      }, 5000);
+    } catch (error) {
+      alert("Terjadi kesalahan saat menyimpan transaksi.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatCurrency = (value: number) => {

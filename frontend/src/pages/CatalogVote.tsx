@@ -49,30 +49,23 @@ export default function CatalogVote() {
     { id: 4, name: "Kategori: Purna" },
   ];
 
-  const handleSubmitVotes = async () => {
+  const handleSubmitVotes = () => {
     if (IS_VOTING_CLOSED) {
       alert("Voting telah ditutup. Pembelian suara baru tidak diizinkan.");
       return;
     }
-    setSubmitting(true);
-    try {
-      const result = await addTransaction(
-        cart.map(i => ({ id: i.id, name: i.name, qty: i.qty, price: i.price }))
-      );
-
-      if (!result) {
-        alert("Gagal membuat tagihan pembayaran. Pastikan server backend berjalan.");
-        return;
-      }
-
-      navigate("/checkout", { 
-        state: { cart, totalPrice, transactionCode: result.transactionCode, kodeUnik: result.kodeUnik, grandTotal: result.grandTotal } 
-      });
-    } catch (error) {
-      alert("Gagal membuat tagihan pembayaran.");
-    } finally {
-      setSubmitting(false);
+    if (cart.length === 0) {
+      alert("Keranjang vote masih kosong.");
+      return;
     }
+
+    const transactionCode = `PAY-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const kodeUnik = 0;
+    const grandTotal = totalPrice;
+
+    navigate("/checkout", { 
+      state: { cart, totalPrice, transactionCode, kodeUnik, grandTotal } 
+    });
   };
 
   const handleUpdateQty = (participant: Participant, delta: number) => {
