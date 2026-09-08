@@ -210,12 +210,14 @@ export const requestPayment = async (req: Request, res: Response) => {
     if (IS_VOTING_CLOSED) {
       return res.status(400).json({ message: "Voting telah ditutup. Pembelian suara baru tidak diizinkan." });
     }
-    const { cart } = req.body;
+    const { cart, transactionCode } = req.body;
     if (!cart || !Array.isArray(cart) || cart.length === 0) {
       return res.status(400).json({ message: "Keranjang vote kosong atau tidak valid" });
     }
 
-    const paymentCode = `PAY-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const paymentCode = (transactionCode && typeof transactionCode === "string" && transactionCode.trim() !== "")
+      ? transactionCode.trim()
+      : `PAY-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
     let totalAmount = 0;
     const voterEmail = "guest@forbasi.com";
 

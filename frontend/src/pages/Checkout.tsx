@@ -34,7 +34,8 @@ export default function Checkout() {
     setLoading(true);
     try {
       const result = await addTransaction(
-        cart.map((i: any) => ({ id: i.id, name: i.name, qty: i.qty, price: i.price }))
+        cart.map((i: any) => ({ id: i.id, name: i.name, qty: i.qty, price: i.price })),
+        transactionCode
       );
 
       if (!result) {

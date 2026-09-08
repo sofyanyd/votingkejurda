@@ -18,7 +18,7 @@ export interface VoteTransaction {
 interface TransactionState {
   transactions: VoteTransaction[];
   fetchTransactions: () => Promise<void>;
-  addTransaction: (cart: { id: number; name: string; qty: number; price: number }[]) => Promise<{ transactionCode: string; grandTotal: number; kodeUnik: number } | null>;
+  addTransaction: (cart: { id: number; name: string; qty: number; price: number }[], transactionCode?: string) => Promise<{ transactionCode: string; grandTotal: number; kodeUnik: number } | null>;
   approveTransaction: (transactionCode: string) => Promise<boolean>;
   deleteTransaction: (transactionCode: string) => Promise<boolean>;
   addOfflineVote: (finalistId: number, namaKlub: string, votesCount: number, voterEmail?: string) => Promise<boolean>;
@@ -36,9 +36,9 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     }
   },
 
-  addTransaction: async (cart) => {
+  addTransaction: async (cart, transactionCode) => {
     try {
-      const res = await axios.post(`${API_BASE_URL}/votes/request-payment`, { cart });
+      const res = await axios.post(`${API_BASE_URL}/votes/request-payment`, { cart, transactionCode });
       return {
         transactionCode: res.data.transactionCode,
         grandTotal: res.data.grandTotal,
