@@ -54,7 +54,7 @@ export const Header: React.FC = () => {
                 {/* Warna teks diubah menjadi text-slate-500 agar lebih terlihat */}
                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Official Arena
+                  Official Voting Platform
                 </span>
             </div>
           </Link>

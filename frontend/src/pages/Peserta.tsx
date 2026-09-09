@@ -83,8 +83,8 @@ export default function Peserta() {
       description: "Juara Favorit murni ditentukan dari akumulasi jumlah otorisasi suara (voting) yang masuk melalui platform resmi ini. Tidak ada intervensi dari nilai dewan juri lapangan KEJURDA.",
     },
     {
-      title: "Apakah profil detail delegasi akan diperbarui?",
-      description: "Ya. Saat ini informasi difokuskan pada nama delegasi, asal instansi, dan nomor urut tampil. Foto resmi dan data tambahan akan diunggah oleh panitia daerah setelah validasi final.",
+      title: "Informasi apa saja yang ditampilkan pada daftar delegasi?",
+      description: "Informasi resmi mencakup nama tim delegasi daerah, nomor urut tampil, kategori perlombaan, dan foto dokumentasi resmi tim yang bertanding di KEJURDA 2026.",
     },
     {
       title: "Bagaimana cara menyumbangkan suara?",
@@ -196,15 +196,14 @@ export default function Peserta() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 md:gap-6">
             {filteredFinalists.map((f) => (
-              <div key={f.id} className="group bg-white p-2.5 rounded-[1.5rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 hover:shadow-[0_8px_30px_rgb(16,185,129,0.1)] hover:border-emerald-100 transition-all duration-300 flex flex-col h-full hover:-translate-y-1 cursor-pointer">
+              <div key={f.id} className="bg-white p-2.5 rounded-[1.5rem] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 flex flex-col h-full">
                 
                 <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-100 mb-4">
                     <img
                       src={f.imageUrl}
                       alt={f.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     
                     <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm text-slate-800 font-black text-xs px-2.5 py-1.5 rounded-lg shadow-sm border border-white/50">
                       #{f.no_urut}
@@ -212,16 +211,13 @@ export default function Peserta() {
                 </div>
 
                 <div className="px-2 pb-2 flex flex-col flex-grow">
-                  <h3 className="font-black text-slate-800 text-sm md:text-base leading-tight mb-1.5 group-hover:text-emerald-600 transition-colors line-clamp-2">
+                  <h3 className="font-black text-slate-800 text-sm md:text-base leading-tight mb-1.5 line-clamp-2">
                     {f.name}
                   </h3>
                   <div className="mt-auto flex items-center justify-between pt-2">
-                      <p className="text-xs text-slate-500 font-medium truncate max-w-[85%]">
+                      <p className="text-xs text-slate-500 font-medium truncate">
                         {f.role}
                       </p>
-                      <div className="w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity group-hover:bg-emerald-50 text-emerald-600">
-                          <ArrowRight size={12} className="-rotate-45" />
-                      </div>
                   </div>
                 </div>
 

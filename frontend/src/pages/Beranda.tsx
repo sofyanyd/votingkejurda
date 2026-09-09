@@ -32,17 +32,17 @@ export default function Dashboard() {
     }, []);
 
     const faqItems = [
-        { title: "Mengenai Voting KEJURDA 2026", description: "Sistem voting resmi dan eksklusif untuk menentukan Juara Favorit pada Lomba Keterampilan Baris Berbaris (LKBB) Tingkat Daerah (KEJURDA) Tahun 2026." },
+        { title: "Mengenai Voting KEJURDA 2026", description: "Sistem voting resmi dan eksklusif untuk menentukan Juara Favorit pada Lomba Olahraga Baris Berbaris (LOBB) Tingkat Daerah (KEJURDA) Tahun 2026." },
         { title: "Bagaimana prosedur pemungutan suara?", description: "Akses menu 'Dukungan', dapatkan tiket resmi Anda, pilih delegasi daerah yang didukung, lalu konfirmasi pilihan Anda. Pastikan tiket Anda aktif." },
-        { title: "Apakah ada batasan vote per akun?", description: "Sistem diatur berdasarkan regulasi kompetisi FORBASI Tingkat Daerah. Silakan cek detail pada halaman tiket." },
-        { title: "Kapan akses voting ditutup?", description: "Live voting akan otomatis dikunci pada malam puncak penganugerahan. Jangan sampai delegasi Anda tertinggal!" },
-        { title: "Bagaimana cara memantau pergerakan suara?", description: "Data suara masuk (incoming votes) ditampilkan secara real-time pada halaman Live Leaderboard." },
+        { title: "Apakah ada batasan vote per akun?", description: "Tidak ada batasan vote per akun. Setiap pengguna dapat memberikan suara untuk delegasi yang mereka dukung." },
+        { title: "Kapan akses voting ditutup?", description: "Live voting akan otomatis dikunci pada hari H acara KEJURDA 2026. Jangan sampai delegasi Anda tertinggal!" },
+        { title: "Bagaimana cara memantau pergerakan suara?", description: "Data suara masuk ditampilkan secara real-time pada halaman Live Leaderboard." },
     ];
 
     const votingSteps = [
         {
             title: "Tentukan Pilihan",
-            desc: `Analisis profil dan rekam jejak setiap delegasi daerah yang bertanding di KEJURDA 2026.`,
+            desc: `Dukung tim delegasi daerah terbaik kebanggaanmu yang bertanding di KEJURDA 2026.`,
             btnLabel: "Lihat Kandidat",
             link: "/peserta",
             icon: ShieldCheck
