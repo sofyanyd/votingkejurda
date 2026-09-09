@@ -17,6 +17,8 @@ import {
   Filter
 } from "lucide-react";
 
+import { compressImage } from "../../../utils/imageCompressor";
+
 export default function FinanceIndex() {
   const { qrList, addQrCode, updateQrCode, deleteQrCode, fetchQrCodes } = useQrCodeStore();
   const { pletonList, fetchPleton } = usePletonStore();
@@ -255,16 +257,19 @@ export default function FinanceIndex() {
     }, 800);
   };
 
-  const handleQrPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQrPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) return alert("Maksimal 2MB");
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setQrImage(reader.result as string);
-        setQrImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        showToast("Mekompresi QR Code...", "loading");
+        const compressedBase64 = await compressImage(file, 800, 800, 0.8);
+        setQrImage(compressedBase64);
+        setQrImagePreview(compressedBase64);
+        showToast("QR Code siap diunggah!", "success");
+      } catch (err) {
+        console.error("Gagal kompresi QR Code:", err);
+        showToast("Gagal memproses QR Code.", "error");
+      }
     }
   };
 

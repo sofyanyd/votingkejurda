@@ -3,6 +3,8 @@ import { usePletonStore, type PletonData } from "../../../stores/pletonStore";
 import { useCategoryStore } from "../../../stores/categoryStore";
 import { Plus, Search, Edit, Trash2, Download, X, Image as ImageIcon } from "lucide-react";
 
+import { compressImage } from "../../../utils/imageCompressor";
+
 export default function PletonManagemen() {
   const { pletonList, loading, fetchPleton, addPleton, updatePleton, deletePleton } = usePletonStore();
   const { categories, fetchCategories } = useCategoryStore();
@@ -38,16 +40,19 @@ export default function PletonManagemen() {
     if (type !== "loading") setTimeout(() => setToast({ message: "", type: null }), 3000);
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) return alert("Ukuran file foto maksimal 2MB");
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFoto(reader.result as string);
-        setFotoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        showToast("Mekompresi foto...", "loading");
+        const compressedBase64 = await compressImage(file, 800, 800, 0.75);
+        setFoto(compressedBase64);
+        setFotoPreview(compressedBase64);
+        showToast("Foto siap diunggah!", "success");
+      } catch (err) {
+        console.error("Gagal kompresi foto:", err);
+        showToast("Gagal memproses foto.", "error");
+      }
     }
   };
 
@@ -266,7 +271,7 @@ export default function PletonManagemen() {
                       Pilih Gambar Pleton
                       <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
                     </label>
-                    <div className="text-[10px] text-slate-400 mt-1.5 font-medium">Format JPG/PNG maks 2MB</div>
+                    <div className="text-[10px] text-slate-400 mt-1.5 font-medium">Format JPG/PNG (Otomatis Kompresi)</div>
                   </div>
                 </div>
                 <div className="border-t border-slate-200 pt-3">

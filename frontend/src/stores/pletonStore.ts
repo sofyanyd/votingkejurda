@@ -37,7 +37,10 @@ export const usePletonStore = create<PletonState>((set, get) => ({
 
   addPleton: async (formData) => {
     try {
-      const res = await axios.post(`${API_BASE_URL}/speakers`, formData);
+      const token = localStorage.getItem("token");
+      const res = await axios.post(`${API_BASE_URL}/speakers`, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       set({ pletonList: [...get().pletonList, res.data] });
       return true;
     } catch (error) {
@@ -48,7 +51,10 @@ export const usePletonStore = create<PletonState>((set, get) => ({
 
   deletePleton: async (id) => {
     try {
-      await axios.delete(`${API_BASE_URL}/speakers/${id}`);
+      const token = localStorage.getItem("token");
+      await axios.delete(`${API_BASE_URL}/speakers/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       set({ pletonList: get().pletonList.filter(p => p.id !== id) });
       return true;
     } catch (error) {
@@ -59,7 +65,10 @@ export const usePletonStore = create<PletonState>((set, get) => ({
 
   updatePleton: async (id, formData) => {
     try {
-      const res = await axios.put(`${API_BASE_URL}/speakers/${id}`, formData);
+      const token = localStorage.getItem("token");
+      const res = await axios.put(`${API_BASE_URL}/speakers/${id}`, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       set({ pletonList: get().pletonList.map(p => p.id === id ? { ...p, ...res.data } : p) });
       return true;
     } catch (error) {
