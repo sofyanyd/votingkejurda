@@ -82,6 +82,10 @@ export default function FinanceIndex() {
     const success = await approveTransaction(transactionCode);
     if (success) {
       showToast("Pembayaran berhasil diverifikasi secara manual!", "success");
+      // Update modal jika sedang terbuka
+      if (selectedGroup && selectedGroup.paymentCode === transactionCode) {
+        setSelectedGroup((prev: any) => prev ? { ...prev, status: "Lunas" } : prev);
+      }
     } else {
       showToast("Gagal memverifikasi pembayaran.", "error");
     }

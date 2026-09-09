@@ -52,23 +52,36 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
 
   approveTransaction: async (transactionCode: string) => {
     try {
+      // Optimistic update: ubah status di local state dulu agar UI instan
+      set({
+        transactions: get().transactions.map(tx =>
+          tx.id.includes(transactionCode) ? { ...tx, status: "Lunas" } : tx
+        )
+      });
       await axios.post(`${API_BASE_URL}/votes/finalize-payment`, { transactionCode });
-      // Refresh transactions list
-      await get().fetchTransactions();
+      // Sync di background tanpa await agar tidak block UI
+      get().fetchTransactions();
       return true;
     } catch (error) {
       console.error("Gagal memverifikasi transaksi:", error);
+      // Rollback jika gagal
+      get().fetchTransactions();
       return false;
     }
   },
 
   deleteTransaction: async (transactionCode: string) => {
     try {
+      // Optimistic update: hapus dari local state dulu
+      set({
+        transactions: get().transactions.filter(tx => !tx.id.includes(transactionCode))
+      });
       await axios.delete(`${API_BASE_URL}/votes/transactions/${transactionCode}`);
-      set({ transactions: get().transactions.filter(tx => tx.id !== transactionCode) });
       return true;
     } catch (error) {
       console.error("Gagal menghapus transaksi:", error);
+      // Rollback jika gagal
+      get().fetchTransactions();
       return false;
     }
   },
@@ -80,8 +93,8 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
         votesCount,
         voterEmail
       });
-      // Refresh transactions list
-      await get().fetchTransactions();
+      // Sync di background
+      get().fetchTransactions();
       return true;
     } catch (error) {
       console.error("Gagal submit vote offline:", error);
