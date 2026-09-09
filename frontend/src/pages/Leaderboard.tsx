@@ -55,10 +55,13 @@ export default function Leaderboard() {
   const filteredStandings = (selectedCategory === "Semua"
     ? validStandings
     : validStandings.filter(item => item.category_id === Number(selectedCategory))
-  ).map((item, idx) => ({
-    ...item,
-    displayRank: idx + 1  // selalu rank dalam view ini (global jika Semua, per-kategori jika filter)
-  }));
+  )
+    .slice()
+    .sort((a, b) => (b.votes ?? 0) - (a.votes ?? 0))  // sort votes terbanyak ke atas
+    .map((item, idx) => ({
+      ...item,
+      displayRank: idx + 1  // rank berdasarkan urutan setelah sort
+    }));
 
   const topThree = filteredStandings.slice(0, 3);
   const remainingStandings = filteredStandings.slice(3);
