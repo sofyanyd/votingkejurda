@@ -138,16 +138,13 @@ async function main() {
     { id: teamId++, no_urut: "01", nama: "Brebes A", asal_sekolah: "Brebes A", foto_url: "https://via.placeholder.com/400x400.png?text=Brebes+A", category_id: 3 },
 
     // ── KATEGORI PURNA (Category 4) ──
-    { id: teamId++, no_urut: "06", nama: "Grobogan C", asal_sekolah: "Grobogan C", foto_url: "https://via.placeholder.com/400x400.png?text=Grobogan+C", category_id: 4 },
-    { id: teamId++, no_urut: "04", nama: "Grobogan B", asal_sekolah: "Grobogan B", foto_url: "https://via.placeholder.com/400x400.png?text=Grobogan+B", category_id: 4 },
-    { id: teamId++, no_urut: "05", nama: "Grobogan A", asal_sekolah: "Grobogan A", foto_url: "https://via.placeholder.com/400x400.png?text=Grobogan+A", category_id: 4 },
-    { id: teamId++, no_urut: "10", nama: "Kota Semarang C", asal_sekolah: "Kota Semarang C", foto_url: "https://via.placeholder.com/400x400.png?text=Kota+Semarang+C", category_id: 4 },
-    { id: teamId++, no_urut: "08", nama: "Kota Semarang B", asal_sekolah: "Kota Semarang B", foto_url: "https://via.placeholder.com/400x400.png?text=Kota+Semarang+B", category_id: 4 },
-    { id: teamId++, no_urut: "01", nama: "Kota Semarang A", asal_sekolah: "Kota Semarang A", foto_url: "https://via.placeholder.com/400x400.png?text=Kota+Semarang+A", category_id: 4 },
-    { id: teamId++, no_urut: "02", nama: "Surakarta", asal_sekolah: "Surakarta", foto_url: "https://via.placeholder.com/400x400.png?text=Surakarta", category_id: 4 },
-    { id: teamId++, no_urut: "09", nama: "Demak C", asal_sekolah: "Demak C", foto_url: "https://via.placeholder.com/400x400.png?text=Demak+C", category_id: 4 },
-    { id: teamId++, no_urut: "07", nama: "Demak B", asal_sekolah: "Demak B", foto_url: "https://via.placeholder.com/400x400.png?text=Demak+B", category_id: 4 },
-    { id: teamId++, no_urut: "03", nama: "Demak A", asal_sekolah: "Demak A", foto_url: "https://via.placeholder.com/400x400.png?text=Demak+A", category_id: 4 },
+    { id: teamId++, no_urut: "04", nama: "Grobogan C", asal_sekolah: "Grobogan C", foto_url: "https://via.placeholder.com/400x400.png?text=Grobogan+C", category_id: 4 },
+    { id: teamId++, no_urut: "02", nama: "Grobogan B", asal_sekolah: "Grobogan B", foto_url: "https://via.placeholder.com/400x400.png?text=Grobogan+B", category_id: 4 },
+    { id: teamId++, no_urut: "03", nama: "Grobogan A", asal_sekolah: "Grobogan A", foto_url: "https://via.placeholder.com/400x400.png?text=Grobogan+A", category_id: 4 },
+    { id: teamId++, no_urut: "08", nama: "Kota Semarang C", asal_sekolah: "Kota Semarang C", foto_url: "https://via.placeholder.com/400x400.png?text=Kota+Semarang+C", category_id: 4 },
+    { id: teamId++, no_urut: "06", nama: "Kota Semarang B", asal_sekolah: "Kota Semarang B", foto_url: "https://via.placeholder.com/400x400.png?text=Kota+Semarang+B", category_id: 4 },
+    { id: teamId++, no_urut: "07", nama: "Surakarta", asal_sekolah: "Surakarta", foto_url: "https://via.placeholder.com/400x400.png?text=Surakarta", category_id: 4 },
+    { id: teamId++, no_urut: "05", nama: "Demak C", asal_sekolah: "Demak C", foto_url: "https://via.placeholder.com/400x400.png?text=Demak+C", category_id: 4 },
   ];
 
   await prisma.teams.createMany({ data: teamsData });

@@ -27,10 +27,14 @@ export default function CatalogVote() {
     fetchPleton();
   }, []);
 
-  const participants: (Participant & { categoryId: number })[] = pletonList.map((item) => {
+  const participants: (Participant & { categoryId: number; noUrutNum: number })[] = pletonList.map((item) => {
     let subName = item.bidang;
+    let noUrutNum = 99;
     if (item.bidang.includes(" - ")) {
       subName = item.bidang.split(" - ")[1];
+      if (item.bidang.startsWith("No. ")) {
+        noUrutNum = parseInt(item.bidang.substring(4).split(" - ")[0].trim(), 10) || 99;
+      }
     }
     return {
       id: item.id,
@@ -38,7 +42,8 @@ export default function CatalogVote() {
       subName: subName,
       price: 3000,
       imageUrl: item.foto_url || `https://via.placeholder.com/300x300.png?text=${encodeURIComponent(item.nama)}`,
-      categoryId: item.category_id || 1
+      categoryId: item.category_id || 1,
+      noUrutNum: noUrutNum
     };
   });
 
@@ -146,7 +151,9 @@ export default function CatalogVote() {
           ) : (
             <div className="space-y-10">
               {categories.map((cat) => {
-                const catParticipants = participants.filter((p) => p.categoryId === cat.id);
+                const catParticipants = participants
+                  .filter((p) => p.categoryId === cat.id)
+                  .sort((a, b) => a.noUrutNum - b.noUrutNum);
                 if (catParticipants.length === 0) return null;
                 return (
                   <div key={cat.id} className="space-y-4">

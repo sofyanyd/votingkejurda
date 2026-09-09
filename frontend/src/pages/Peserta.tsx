@@ -53,9 +53,29 @@ export default function Peserta() {
     fetchFinalists();
   }, []);
 
+  const CATEGORY_PRIORITY: Record<number, number> = {
+    2: 1, // U13
+    1: 2, // U16
+    3: 3, // U19
+    4: 4, // Purna
+  };
+
+  const sortedFinalists = [...finalists].sort((a, b) => {
+    const catA = CATEGORY_PRIORITY[a.category_id] || 99;
+    const catB = CATEGORY_PRIORITY[b.category_id] || 99;
+
+    if (catA !== catB) {
+      return catA - catB; // Sort categories: U13 -> U16 -> U19 -> Purna
+    }
+
+    const numA = parseInt(a.no_urut, 10) || 0;
+    const numB = parseInt(b.no_urut, 10) || 0;
+    return numA - numB;
+  });
+
   const filteredFinalists = selectedCategory === "Semua"
-    ? finalists
-    : finalists.filter(f => f.category_id === Number(selectedCategory));
+    ? sortedFinalists
+    : sortedFinalists.filter(f => f.category_id === Number(selectedCategory));
 
   const faqItems = [
     {
