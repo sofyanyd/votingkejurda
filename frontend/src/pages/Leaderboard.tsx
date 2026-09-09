@@ -57,7 +57,7 @@ export default function Leaderboard() {
     : validStandings.filter(item => item.category_id === Number(selectedCategory))
   ).map((item, idx) => ({
     ...item,
-    displayRank: selectedCategory === "Semua" ? (item.categoryRank || idx + 1) : idx + 1
+    displayRank: idx + 1  // selalu rank dalam view ini (global jika Semua, per-kategori jika filter)
   }));
 
   const topThree = filteredStandings.slice(0, 3);
@@ -127,7 +127,12 @@ export default function Leaderboard() {
               {topThree[1] && (
                 <div className="w-1/3 flex flex-col items-center order-1 group">
                   <div className="text-center mb-3 px-1 transition-transform group-hover:-translate-y-1.5">
-                    <p className="font-bold text-slate-200 text-xs md:text-sm line-clamp-2 leading-snug mb-1.5">{topThree[1].nama}</p>
+                    <p className="font-bold text-slate-200 text-xs md:text-sm line-clamp-2 leading-snug mb-1">{topThree[1].nama}</p>
+                    {topThree[1].category_nama && (
+                      <span className="inline-block text-[9px] font-black text-slate-400 bg-slate-800/80 border border-slate-700 px-1.5 py-0.5 rounded-full mb-1.5">
+                        {topThree[1].category_nama}
+                      </span>
+                    )}
                     <div className="inline-flex items-center gap-1 bg-slate-800/80 border border-slate-700/80 px-2.5 py-1 rounded-lg text-slate-300 shadow-sm backdrop-blur-sm">
                         <span className="text-xs md:text-sm font-black">{topThree[1].votes.toLocaleString()}</span>
                     </div>
@@ -144,7 +149,12 @@ export default function Leaderboard() {
                 <div className="w-1/3 flex flex-col items-center order-2 group z-10">
                   <div className="text-center mb-3 md:mb-5 px-1 transition-transform group-hover:-translate-y-2">
                     <Crown size={28} className="text-amber-400 mx-auto mb-1.5 animate-bounce drop-shadow-[0_0_15px_rgba(251,191,36,0.6)]" />
-                    <p className="font-black text-white text-sm md:text-base line-clamp-2 leading-snug mb-2">{topThree[0].nama}</p>
+                    <p className="font-black text-white text-sm md:text-base line-clamp-2 leading-snug mb-1">{topThree[0].nama}</p>
+                    {topThree[0].category_nama && (
+                      <span className="inline-block text-[9px] font-black text-amber-400/80 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded-full mb-1.5">
+                        {topThree[0].category_nama}
+                      </span>
+                    )}
                     <div className="inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/40 px-3 md:px-4 py-1.5 rounded-xl text-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.15)] backdrop-blur-md">
                         <span className="text-sm md:text-base font-black">{topThree[0].votes.toLocaleString()}</span>
                         <span className="text-[9px] font-bold uppercase opacity-80 hidden md:inline">Votes</span>
@@ -161,7 +171,12 @@ export default function Leaderboard() {
               {topThree[2] && (
                 <div className="w-1/3 flex flex-col items-center order-3 group">
                   <div className="text-center mb-3 px-1 transition-transform group-hover:-translate-y-1.5">
-                    <p className="font-bold text-slate-200 text-xs md:text-sm line-clamp-2 leading-snug mb-1.5">{topThree[2].nama}</p>
+                    <p className="font-bold text-slate-200 text-xs md:text-sm line-clamp-2 leading-snug mb-1">{topThree[2].nama}</p>
+                    {topThree[2].category_nama && (
+                      <span className="inline-block text-[9px] font-black text-slate-400 bg-slate-800/80 border border-slate-700 px-1.5 py-0.5 rounded-full mb-1.5">
+                        {topThree[2].category_nama}
+                      </span>
+                    )}
                     <div className="inline-flex items-center gap-1 bg-slate-800/80 border border-slate-700/80 px-2.5 py-1 rounded-lg text-slate-300 shadow-sm backdrop-blur-sm">
                         <span className="text-xs md:text-sm font-black">{topThree[2].votes.toLocaleString()}</span>
                     </div>

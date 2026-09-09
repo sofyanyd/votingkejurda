@@ -198,7 +198,11 @@ export default function FinanceIndex() {
       if (tx.status === "Lunas") groups[pCode].status = "Lunas";
       else if (tx.status === "Batal" && groups[pCode].status === "Pending") groups[pCode].status = "Batal";
 
-      groups[pCode].items.push({ id: tx.id, namaKlub: tx.namaKlub, votesCount: tx.votesCount, amount: tx.amount });
+      const matchedPleton = pletonList.find((p) => p.nama === tx.namaKlub);
+      const categoryName = matchedPleton?.category_id
+        ? ({ 1: "U16", 2: "U13", 3: "U19", 4: "Purna" } as Record<number, string>)[matchedPleton.category_id] || ""
+        : "";
+      groups[pCode].items.push({ id: tx.id, namaKlub: tx.namaKlub, votesCount: tx.votesCount, amount: tx.amount, categoryName });
     });
     return Object.values(groups);
   }, [filteredTransactions]);
@@ -737,7 +741,14 @@ export default function FinanceIndex() {
                   {selectedGroup.items.map((item: any) => (
                     <div key={item.id} className="flex justify-between items-center p-3 text-sm bg-white">
                       <div>
-                        <div className="font-bold text-slate-800">{item.namaKlub}</div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="font-bold text-slate-800">{item.namaKlub}</div>
+                          {item.categoryName && (
+                            <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-full">
+                              {item.categoryName}
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-slate-500">{item.votesCount} Suara</div>
                       </div>
                       <div className="font-black text-slate-700">{formatCurrency(item.amount)}</div>

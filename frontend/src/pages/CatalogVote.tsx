@@ -48,11 +48,14 @@ export default function CatalogVote() {
   });
 
   const categories = [
-    { id: 2, name: "Kategori: U13" },
-    { id: 1, name: "Kategori: U16" },
-    { id: 3, name: "Kategori: U19" },
-    { id: 4, name: "Kategori: Purna" },
+    { id: 2, name: "Kategori: U13", shortName: "U13" },
+    { id: 1, name: "Kategori: U16", shortName: "U16" },
+    { id: 3, name: "Kategori: U19", shortName: "U19" },
+    { id: 4, name: "Kategori: Purna", shortName: "Purna" },
   ];
+
+  const getCategoryShortName = (categoryId: number) =>
+    categories.find((c) => c.id === categoryId)?.shortName || "";
 
   const handleSubmitVotes = () => {
     if (IS_VOTING_CLOSED) {
@@ -82,7 +85,7 @@ export default function CatalogVote() {
         if (newQty <= 0) return prevCart.filter((item) => item.id !== participant.id);
         return prevCart.map((item) => item.id === participant.id ? { ...item, qty: newQty } : item);
       } else if (delta > 0) {
-        return [...prevCart, { id: participant.id, name: participant.name, price: participant.price, qty: 1 }];
+        return [...prevCart, { id: participant.id, name: participant.name, price: participant.price, qty: 1, categoryId: (participant as any).categoryId }];
       }
       return prevCart;
     });
@@ -113,10 +116,10 @@ export default function CatalogVote() {
 
           <div className="mb-8">
             <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3.5 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
-              <Sparkles size={12} /> Official Store KEJURDA 2026
+              <Sparkles size={12} /> Official Voting Platform KEJURDA 2026
             </span>
             <h1 className="text-2xl md:text-4xl font-black text-slate-800 mt-3 tracking-tight">
-              Katalog <span className="text-emerald-600">Finalis & Kandidat</span>
+              Katalog <span className="text-emerald-600">Tim</span>
             </h1>
             <p className="text-slate-500 text-xs md:text-sm mt-1.5 font-medium">Pilih delegasi daerah jagoanmu dari berbagai kategori dan gabungkan dalam 1 transaksi sekaligus.</p>
           </div>
@@ -229,23 +232,30 @@ export default function CatalogVote() {
           <div className="hidden md:flex w-80 xl:w-96 h-full flex-col bg-white border-l border-slate-100 relative z-10 animate-in fade-in slide-in-from-right duration-300">
             <div className="bg-slate-900 p-5 text-white flex items-center gap-2.5 shadow-sm z-20">
               <ShoppingCart size={20} className="text-emerald-400" />
-              <h3 className="font-black text-base tracking-wide">Keranjang Otorisasi</h3>
+              <h3 className="font-black text-base tracking-wide">Keranjang</h3>
             </div>
 
             {/* List Keranjang (Scrollable independen) */}
             <div className="flex-1 overflow-y-auto p-5 bg-white">
               <div className="space-y-4">
                 {cart.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center text-xs border-b border-slate-100 pb-3.5 gap-2">
-                    <div>
+                <div key={item.id} className="flex justify-between items-start text-xs border-b border-slate-100 pb-3.5 gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                       <p className="font-bold text-slate-800 text-sm line-clamp-1">{item.name}</p>
-                      <p className="text-slate-400 font-semibold mt-0.5">{item.qty}x @ Rp{item.price.toLocaleString("id-ID")}</p>
+                      {item.categoryId && (
+                        <span className="shrink-0 text-[9px] font-black text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-full">
+                          {getCategoryShortName(item.categoryId)}
+                        </span>
+                      )}
                     </div>
-                    <p className="font-black text-emerald-600 text-sm whitespace-nowrap">
-                      Rp {(item.qty * item.price).toLocaleString("id-ID")}
-                    </p>
+                    <p className="text-slate-400 font-semibold">{item.qty}x @ Rp{item.price.toLocaleString("id-ID")}</p>
                   </div>
-                ))}
+                  <p className="font-black text-emerald-600 text-sm whitespace-nowrap">
+                    Rp {(item.qty * item.price).toLocaleString("id-ID")}
+                  </p>
+                </div>
+              ))}
               </div>
             </div>
 
@@ -277,9 +287,16 @@ export default function CatalogVote() {
               <h4 className="font-black text-slate-800 mb-4 flex items-center gap-2 text-sm"><ShoppingCart size={16}/> Rincian Vote</h4>
               <div className="space-y-3">
                 {cart.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center text-xs border-b border-slate-200/80 pb-2.5">
+                  <div key={item.id} className="flex justify-between items-start text-xs border-b border-slate-200/80 pb-2.5">
                     <div>
-                      <p className="font-bold text-slate-700">{item.name}</p>
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <p className="font-bold text-slate-700">{item.name}</p>
+                        {item.categoryId && (
+                          <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-full">
+                            {getCategoryShortName(item.categoryId)}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-slate-400 font-semibold">{item.qty} x Rp {item.price}</p>
                     </div>
                     <p className="font-black text-emerald-600">Rp {(item.qty * item.price).toLocaleString("id-ID")}</p>

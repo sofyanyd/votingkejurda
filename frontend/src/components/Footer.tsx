@@ -13,12 +13,12 @@ export default function Footer() {
               <img src="/forbasi.png" alt="FORBASI" className="h-full w-full object-contain" />
             </div>
             <div className="flex flex-col">
-              <span className="font-black text-white leading-none tracking-tight text-xl">KEJURCAB</span>
-              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-1">Kota Tegal 2026</span>
+              <span className="font-black text-white leading-none tracking-tight text-xl">KEJURDA</span>
+              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-1">Jawa Tengah 2026</span>
             </div>
           </Link>
           <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
-            Platform official ticketing dan live leaderboard untuk Lomba Kejuaraan Cabang. Mari dukung pleton kebanggaanmu menjadi Juara Favorit!
+            Platform official ticketing dan live leaderboard untuk Lomba Kejuaraan Daerah. Mari dukung pleton kebanggaanmu menjadi Juara Favorit!
           </p>
         </div>
 
@@ -30,9 +30,9 @@ export default function Footer() {
           <ul className="flex flex-col gap-3">
             {[
               { label: "Beranda", path: "/beranda" },
-              { label: "Galeri Peserta", path: "/peserta" },
+              { label: "Peserta", path: "/peserta" },
               { label: "Leaderboard", path: "/leaderboard" },
-              { label: "Beli Tiket Vote", path: "/dukungan" },
+              { label: "Dukungan", path: "/dukungan" },
             ].map((link, i) => (
               <li key={i}>
                 <Link to={link.path} className="text-sm hover:text-emerald-400 transition-colors flex items-center gap-2">
@@ -53,8 +53,8 @@ export default function Footer() {
               <li className="flex items-start gap-3 text-sm">
                 <MapPin className="text-emerald-500 shrink-0 mt-0.5" size={18} />
                 <span className="text-slate-300">
-                  <strong className="text-white block mb-0.5">Universitas BSI Kampus Tegal</strong>
-                   Jl. Sipelem No.22, Kraton, Kec. Tegal Bar., Kota Tegal, Jawa Tengah 52112
+                  <strong className="text-white block mb-0.5">Universitas Harkat Negeri</strong>
+                   Jl. Mataram No.9 Pesurungan Lor, Kec. Margadana, Kota Tegal, Jawa Tengah 52147
                 </span>
               </li>
               <li className="flex items-center gap-3 text-sm">
@@ -66,14 +66,14 @@ export default function Footer() {
             {/* Embed Google Maps */}
             <div className="w-full h-32 rounded-xl overflow-hidden bg-slate-800 border border-slate-700">
               <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d389.8265604488426!2d109.12080033306385!3d-6.864199593094869!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e6fb7613e508bbf%3A0x29b9f43bc3956608!2sUniversitas%20BSI%20Kampus%20Tegal!5e0!3m2!1sid!2sid!4v1782030645060!5m2!1sid!2sid" 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.184592532426!2d109.10534437458405!3d-6.868471367201109!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e6fb761159fca85%3A0x1a640939cc7a18c3!2sUniversitas%20Harkat%20Negeri!5e0!3m2!1sid!2sid!4v1788976766481!5m2!1sid!2sid" 
                 width="100%" 
                 height="100%" 
                 style={{ border: 0 }} 
                 allowFullScreen={false} 
                 loading="lazy" 
                 referrerPolicy="no-referrer-when-downgrade"
-                title="Lokasi KEJURCAB"
+                title="Lokasi KEJURCADA 2026"
               ></iframe>
             </div>
           </div>
@@ -87,7 +87,7 @@ export default function Footer() {
           © {new Date().getFullYear()} FORBASI Kota Tegal. Hak cipta dilindungi undang-undang.
         </p>
         <p className="text-xs text-slate-500 flex items-center gap-1">
-          Developed by PPM D4 Teknik Informatika Universitas Harkat Negeri for KEJURCAB 2026
+          
         </p>
       </div>
     </footer>

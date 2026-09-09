@@ -130,9 +130,9 @@ export default function Peserta() {
       <section className="max-w-5xl mx-auto px-4 sm:px-6 relative z-20 -mt-12 md:-mt-16 mb-12">
         <div className="bg-white/90 backdrop-blur-xl rounded-[2rem] shadow-[0_10px_40px_rgb(0,0,0,0.04)] border border-white p-2.5 flex flex-col md:flex-row gap-2 md:gap-0 divide-y md:divide-y-0 md:divide-x divide-slate-100">
           {[
-            { icon: Calendar, title: "TANGGAL", val: "12 Juli 2026" },
-            { icon: MapPin, title: "LOKASI", val: "Universitas BSI Tegal" },
-            { icon: CheckCircle, title: "PENUTUPAN", val: "16.00 WIB" },
+            { icon: Calendar, title: "TANGGAL", val: "13 September 2026" },
+            { icon: MapPin, title: "LOKASI", val: "Universitas Universitas Harkat Negeri" },
+            { icon: CheckCircle, title: "PENUTUPAN", val: "12.00 WIB" },
           ].map((item, i) => (
             <div key={i} className="flex-1 flex items-center justify-start md:justify-center px-6 py-4 hover:bg-slate-50/50 transition-colors first:rounded-t-[1.5rem] md:first:rounded-l-[1.5rem] md:first:rounded-tr-none last:rounded-b-[1.5rem] md:last:rounded-r-[1.5rem] md:last:rounded-bl-none">
               <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-emerald-500 shrink-0 border border-slate-100">
