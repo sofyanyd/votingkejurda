@@ -334,10 +334,6 @@ export const requestDokuCheckout = async (params: {
     },
     payment: {
       payment_due_date: 60
-    },
-    customer: {
-      name: params.customerName || "Voter Kejurda",
-      email: params.customerEmail || "guest@forbasi.com"
     }
   };
 
@@ -385,7 +381,8 @@ export const requestDokuCheckout = async (params: {
     throw new Error(`DOKU Checkout API returned invalid JSON: ${responseText}`);
   }
 
-  const paymentUrl = data.response?.payment?.url || data.payment?.url || data.url;
+  const paymentUrl = data.response?.payment?.url || data.payment?.url || data.url || data.payment_url;
+
 
   if (!paymentUrl) {
     throw new Error(`DOKU Checkout API tidak mengembalikan payment URL. Response: ${responseText}`);
