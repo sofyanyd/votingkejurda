@@ -1,9 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, QrCode, Clock, Trophy, Loader2 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { ArrowLeft, CheckCircle2, QrCode, Clock, Trophy, Loader2, Copy, Check, Building2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
-import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import { useTransactionStore } from "../stores/transactionStore";
 
@@ -17,11 +16,15 @@ export default function Checkout() {
 
   const [paymentStatus, setPaymentStatus] = useState<string>(invoiceData?.status || "PENDING");
   const [simulating, setSimulating] = useState(false);
+  const [copied, setCopied] = useState(false);
   const checkStatusFn = useTransactionStore((state) => state.checkDokuPaymentStatus);
 
   const invoiceId = invoiceData?.invoiceId;
   const qrContent = invoiceData?.qrContent || "";
   const amount = invoiceData?.amount || totalPrice;
+  const paymentMethod = invoiceData?.paymentMethod || "VA";
+  const bankName = invoiceData?.bankName || "BRI / PERMATA";
+  const vaNumber = invoiceData?.vaNumber || (qrContent.startsWith("VA:") ? qrContent.split(":")[2] : "");
 
   // Real-time status polling effect
   useEffect(() => {
@@ -53,6 +56,13 @@ export default function Checkout() {
       .replace("Rp", "Rp ");
   };
 
+  const handleCopyVa = () => {
+    if (!vaNumber) return;
+    navigator.clipboard.writeText(vaNumber);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   // Helper function for Sandbox Simulator Testing
   const handleSimulateWebhook = async () => {
     if (!invoiceId || simulating) return;
@@ -82,7 +92,9 @@ export default function Checkout() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans">
         <div className="text-center p-8 bg-white rounded-3xl border border-slate-200 shadow-md">
           <p className="text-slate-500 font-bold mb-4">Sesi transaksi tidak ditemukan atau keranjang kosong.</p>
-          <Button label="Kembali ke Catalog" variant="primary" onClick={() => navigate("/catalogvote")} />
+          <button onClick={() => navigate("/catalogvote")} className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm">
+            Kembali ke Katalog
+          </button>
         </div>
       </div>
     );
@@ -114,7 +126,7 @@ export default function Checkout() {
               </span>
               <h1 className="text-3xl font-black text-slate-900 mt-2">Vote Kamu Sudah Masuk!</h1>
               <p className="text-slate-500 text-sm font-medium mt-1">
-                Terima kasih, pembayaran sebesar <strong className="text-emerald-600 font-bold">{formatCurrency(amount)}</strong> telah terverifikasi secara otomatis oleh sistem.
+                Terima kasih, pembayaran sebesar <strong className="text-emerald-600 font-bold">{formatCurrency(amount)}</strong> telah terverifikasi secara otomatis oleh sistem DOKU.
               </p>
             </div>
 
@@ -141,9 +153,13 @@ export default function Checkout() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-4">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                  Pembayaran <span className="text-emerald-600">QRIS</span>
+                  Pembayaran <span className="text-emerald-600">{paymentMethod === "VA" ? `Virtual Account (${bankName})` : "Dynamic QRIS"}</span>
                 </h1>
-                <p className="text-slate-500 text-xs sm:text-sm font-medium">Scan QRIS menggunakan aplikasi Mobile Banking atau E-Wallet pilihanmu.</p>
+                <p className="text-slate-500 text-xs sm:text-sm font-medium">
+                  {paymentMethod === "VA" 
+                    ? "Transfer dari m-Banking bank manapun (BCA, Mandiri, BRI, BNI, SeaBank, Dana, dll)." 
+                    : "Scan QRIS menggunakan aplikasi Mobile Banking atau E-Wallet."}
+                </p>
               </div>
               
               <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3.5 py-1.5 rounded-2xl w-fit">
@@ -154,57 +170,85 @@ export default function Checkout() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               
-              {/* KIRI: QRIS DOKU CONTAINER */}
+              {/* KIRI: VA / QRIS CONTAINER */}
               <Card className="p-6 border-slate-200 flex flex-col items-center shadow-md">
-                <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                  <span className="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
-                    <QrCode size={16} className="text-emerald-600" /> QRIS Code
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-400 font-bold">INV: {invoiceId}</span>
-                </div>
-                
-                {qrContent ? (
-                  <div className="flex flex-col items-center text-center w-full">
-                    <div className="bg-white p-3.5 border-2 border-slate-200 rounded-3xl shadow-md mb-4 max-w-[260px] relative overflow-hidden group">
-                      <img 
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(qrContent)}`} 
-                        alt="Dynamic QRIS DOKU" 
-                        className="w-56 h-56 object-contain rounded-xl"
-                      />
-                      <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="bg-slate-900/80 text-white text-[10px] font-bold px-3 py-1.5 rounded-full backdrop-blur-xs">QRIS Dynamic DOKU</span>
+                {paymentMethod === "VA" || vaNumber ? (
+                  <div className="w-full flex flex-col items-center">
+                    <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                      <span className="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
+                        <Building2 size={16} className="text-emerald-600" /> Virtual Account {bankName}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400 font-bold">DOKU SNAP</span>
+                    </div>
+
+                    <div className="bg-slate-50 border-2 border-emerald-100 rounded-2xl p-4 w-full text-center mb-4 relative">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Nomor Virtual Account</span>
+                      <div className="text-2xl sm:text-3xl font-mono font-black text-emerald-700 tracking-wider">
+                        {vaNumber || "88880123456789"}
                       </div>
+                      
+                      <button
+                        onClick={handleCopyVa}
+                        className="mt-3 inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-sm cursor-pointer"
+                      >
+                        {copied ? <Check size={14} /> : <Copy size={14} />}
+                        {copied ? "Berhasil Disalin!" : "Salin Nomor VA"}
+                      </button>
                     </div>
 
                     <div className="flex items-center gap-2 text-slate-500 text-xs font-bold bg-slate-100 px-4 py-2 rounded-xl mb-4 w-full justify-center">
                       <Clock size={14} className="text-emerald-600 animate-spin" />
                       <span>Sistem otomatis mendeteksi pembayaran</span>
                     </div>
+
+                    <div className="bg-emerald-50/80 border border-emerald-100 text-emerald-900 p-4 rounded-2xl text-xs font-medium leading-relaxed w-full space-y-1">
+                      <p className="font-bold text-emerald-950">💡 Petunjuk Transfer m-Banking:</p>
+                      <ol className="list-decimal list-inside space-y-0.5 text-[11px] text-emerald-800">
+                        <li>Buka m-Banking (BCA, Mandiri, BRI, BNI, SeaBank, Dana, dll).</li>
+                        <li>Pilih menu **Transfer $\rightarrow$ Virtual Account** (atau Transfer antar bank ke {bankName}).</li>
+                        <li>Masukkan nomor VA di atas dan nominal <strong className="font-bold">{formatCurrency(amount)}</strong>.</li>
+                        <li>Konfirmasi transfer. Status akan otomatis berubah menjadi <strong className="font-bold">PAID</strong>.</li>
+                      </ol>
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-12 text-slate-400 font-medium text-xs">
-                    Memuat Kode QRIS...
+                  <div className="w-full flex flex-col items-center">
+                    <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                      <span className="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
+                        <QrCode size={16} className="text-emerald-600" /> Dynamic QRIS Code
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400 font-bold">INV: {invoiceId}</span>
+                    </div>
+                    
+                    {qrContent ? (
+                      <div className="flex flex-col items-center text-center w-full">
+                        <div className="bg-white p-3.5 border-2 border-slate-200 rounded-3xl shadow-md mb-4 max-w-[260px] relative overflow-hidden group">
+                          <img 
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(qrContent)}`} 
+                            alt="Dynamic QRIS DOKU" 
+                            className="w-56 h-56 object-contain rounded-xl"
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2 text-slate-500 text-xs font-bold bg-slate-100 px-4 py-2 rounded-xl mb-4 w-full justify-center">
+                          <Clock size={14} className="text-emerald-600 animate-spin" />
+                          <span>Sistem otomatis mendeteksi pembayaran</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 text-slate-400 font-medium text-xs">
+                        Memuat Kode QRIS...
+                      </div>
+                    )}
                   </div>
                 )}
-
-                <div className="bg-emerald-50/80 border border-emerald-100 text-emerald-900 p-4 rounded-2xl text-xs font-medium leading-relaxed w-full space-y-1">
-                  <p className="font-bold text-emerald-950 flex items-center gap-1.5">
-                    💡 Cara Pembayaran:
-                  </p>
-                  <ol className="list-decimal list-inside space-y-0.5 text-[11px] text-emerald-800">
-                    <li>Buka BCA, Mandiri, BRI, GoPay, OVO, Dana, LinkAja, atau Qris Scanner lain.</li>
-                    <li>Scan Kode QRIS di atas.</li>
-                    <li>Periksa nominal <strong className="font-bold">{formatCurrency(amount)}</strong> lalu bayar.</li>
-                    <li>Status akan otomatis berubah menjadi <strong className="font-bold">PAID</strong> setelah berhasil.</li>
-                  </ol>
-                </div>
 
                 {/* Developer Sandbox Test Button */}
                 <button
                   onClick={handleSimulateWebhook}
                   disabled={simulating}
                   className="mt-4 text-[10px] font-bold text-slate-400 hover:text-emerald-600 transition-colors underline flex items-center gap-1 cursor-pointer"
-                  title="Simulasikan notifikasi webhook DOKU untuk pengujian Sandbox"
+                  title="Simulasikan notifikasi webhook DOKU untuk pengujian"
                 >
                   {simulating ? <Loader2 size={12} className="animate-spin" /> : "⚡ Test Sandbox: Simulasikan Pembayaran Sukses"}
                 </button>

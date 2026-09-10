@@ -200,3 +200,99 @@ export const requestDokuDynamicQris = async (params: {
     expiresAt: new Date(Date.now() + 60 * 60 * 1000)
   };
 };
+
+/**
+ * Request Virtual Account from DOKU API (BRI, BNI, Permata, BSI, CIMB, etc.)
+ */
+export const requestDokuVirtualAccount = async (params: {
+  invoiceId: string;
+  amount: number;
+  bankCode?: string;
+  customerName?: string;
+  customerEmail?: string;
+}): Promise<{ vaNumber: string; bankName: string; dokuReference: string; expiresAt: Date }> => {
+  const config = getDokuConfig();
+  const requestId = `REQ-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+  const timestamp = new Date().toISOString();
+  const bank = (params.bankCode || "BRI").toUpperCase();
+
+  const targetPath = "/doku-virtual-account/v2/payment-code";
+  const requestBody = {
+    order: {
+      invoice_number: params.invoiceId,
+      amount: params.amount
+    },
+    virtual_account_info: {
+      billing_type: "FIXED",
+      expired_time: 60,
+      reusable_status: false
+    },
+    customer: {
+      name: params.customerName || "Voter Kejurda",
+      email: params.customerEmail || "guest@forbasi.com"
+    }
+  };
+
+  const bodyString = JSON.stringify(requestBody);
+
+  if (config.clientId && config.secretKey && !config.clientId.includes("YOUR_DOKU")) {
+    try {
+      const signature = generateDokuSignatureV2(
+        config.clientId,
+        config.secretKey,
+        requestId,
+        timestamp,
+        targetPath,
+        bodyString
+      );
+
+      const response = await fetch(`${config.baseUrl}${targetPath}`, {
+        method: "POST",
+        headers: {
+          "Client-Id": config.clientId,
+          "Request-Id": requestId,
+          "Request-Timestamp": timestamp,
+          "Signature": signature,
+          "Content-Type": "application/json"
+        },
+        body: bodyString
+      });
+
+      if (response.ok) {
+        const data: any = await response.json();
+        if (data && data.virtual_account_info?.virtual_account_number) {
+          return {
+            vaNumber: data.virtual_account_info.virtual_account_number,
+            bankName: bank,
+            dokuReference: data.response?.invoice_number || params.invoiceId,
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000)
+          };
+        }
+      } else {
+        console.error("[DOKU VA API ERROR] Status:", response.status, await response.text());
+      }
+    } catch (error: any) {
+      console.error("[DOKU VA API ERROR]:", error?.message || error);
+    }
+  }
+
+  // Fallback test VA number for sandbox/dev testing
+  const prefixMap: { [key: string]: string } = {
+    BRI: "8888",
+    BNI: "8808",
+    PERMATA: "8988",
+    BSI: "8809",
+    CIMB: "5988",
+    DOKU: "8888"
+  };
+  const prefix = prefixMap[bank] || "8888";
+  const numDigits = params.invoiceId.replace(/\D/g, "").slice(-10).padStart(10, "0");
+  const mockVaNumber = `${prefix}${numDigits}`;
+
+  return {
+    vaNumber: mockVaNumber,
+    bankName: bank,
+    dokuReference: `DOKU-VA-REF-${params.invoiceId}`,
+    expiresAt: new Date(Date.now() + 60 * 60 * 1000)
+  };
+};

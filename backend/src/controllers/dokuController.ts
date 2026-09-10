@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
-import { requestDokuDynamicQris, verifyDokuWebhookSignature } from "../lib/doku.js";
+import { requestDokuDynamicQris, requestDokuVirtualAccount, verifyDokuWebhookSignature } from "../lib/doku.js";
 import { clearLeaderboardCache, IS_VOTING_CLOSED } from "./voteController.js";
 
 const DEFAULT_PRICE_PER_VOTE = Number(process.env.PRICE_PER_VOTE) || 2000;
 
 /**
  * POST /api/payment/doku/create
- * Creates transaction in DB and requests Dynamic QRIS from DOKU
+ * Creates transaction in DB and requests Dynamic QRIS or Virtual Account from DOKU
  */
 export const createDokuPayment = async (req: Request, res: Response) => {
   try {
@@ -15,8 +15,9 @@ export const createDokuPayment = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Voting telah ditutup. Pembelian suara baru tidak diizinkan." });
     }
 
-    const { teamId, quantity, cart, voterEmail } = req.body;
+    const { teamId, quantity, cart, voterEmail, paymentMethod, bankCode } = req.body;
     const email = voterEmail && typeof voterEmail === "string" ? voterEmail.trim() : "guest@forbasi.com";
+    const selectedMethod = (paymentMethod || "VA").toUpperCase(); // Default to VA for instant active payment
 
     // Support both single team selection and cart array
     let itemsToProcess: { teamId: number; quantity: number }[] = [];
@@ -77,14 +78,40 @@ export const createDokuPayment = async (req: Request, res: Response) => {
       }
     });
 
-    // Request Dynamic QRIS from DOKU
-    const dokuResult = await requestDokuDynamicQris({
-      invoiceId,
-      amount: totalAmount,
-      teamName: primaryTeam ? primaryTeam.nama : "KEJURDA FORBASI"
-    });
+    let dokuResult: any = null;
 
-    // Save QR content & DOKU reference into DB
+    if (selectedMethod === "VA") {
+      const vaRes = await requestDokuVirtualAccount({
+        invoiceId,
+        amount: totalAmount,
+        bankCode: bankCode || "BRI",
+        customerEmail: email
+      });
+
+      dokuResult = {
+        paymentMethod: "VA",
+        vaNumber: vaRes.vaNumber,
+        bankName: vaRes.bankName,
+        dokuReference: vaRes.dokuReference,
+        expiresAt: vaRes.expiresAt,
+        qrContent: `VA:${vaRes.bankName}:${vaRes.vaNumber}`
+      };
+    } else {
+      const qrisRes = await requestDokuDynamicQris({
+        invoiceId,
+        amount: totalAmount,
+        teamName: primaryTeam ? primaryTeam.nama : "KEJURDA FORBASI"
+      });
+
+      dokuResult = {
+        paymentMethod: "QRIS",
+        qrContent: qrisRes.qrContent,
+        dokuReference: qrisRes.dokuReference,
+        expiresAt: qrisRes.expiresAt
+      };
+    }
+
+    // Save QR / VA content & DOKU reference into DB
     await prisma.transactions.update({
       where: { id: createdTx.id },
       data: {
@@ -101,6 +128,9 @@ export const createDokuPayment = async (req: Request, res: Response) => {
       quantity: totalVotesCount,
       pricePerVote: pricePerVote,
       status: "PENDING",
+      paymentMethod: dokuResult.paymentMethod,
+      vaNumber: dokuResult.vaNumber || undefined,
+      bankName: dokuResult.bankName || undefined,
       qrContent: dokuResult.qrContent,
       expiresAt: dokuResult.expiresAt.toISOString()
     });
@@ -112,7 +142,7 @@ export const createDokuPayment = async (req: Request, res: Response) => {
 
 /**
  * POST /api/payment/doku/webhook
- * Handles payment notification webhook from DOKU
+ * Handles payment notification webhook from DOKU for both Virtual Account and QRIS
  */
 export const dokuWebhook = async (req: Request, res: Response) => {
   try {
@@ -136,7 +166,8 @@ export const dokuWebhook = async (req: Request, res: Response) => {
                       payload.transaction?.invoice_number || 
                       payload.order_id || 
                       payload.externalId || 
-                      payload.doku_invoice_number;
+                      payload.doku_invoice_number ||
+                      payload.virtual_account_info?.virtual_account_number;
 
     const dokuStatus = payload.transaction?.status || 
                        payload.status || 
@@ -162,7 +193,8 @@ export const dokuWebhook = async (req: Request, res: Response) => {
       where: {
         OR: [
           { invoice_id: String(invoiceId) },
-          { code: String(invoiceId) }
+          { code: String(invoiceId) },
+          { doku_reference: String(invoiceId) }
         ]
       }
     });
@@ -289,7 +321,8 @@ export const getPaymentStatus = async (req: Request, res: Response) => {
         code: true,
         status: true,
         amount: true,
-        paid_at: true
+        paid_at: true,
+        qr_content: true
       }
     });
 
