@@ -491,6 +491,65 @@ export const deleteTransaction = async (req: Request, res: Response) => {
   }
 };
 
+export const bulkDeleteTransactions = async (req: Request, res: Response) => {
+  try {
+    const { codes } = req.body;
+    if (!codes || !Array.isArray(codes) || codes.length === 0) {
+      return res.status(400).json({ message: "Daftar kode transaksi tidak boleh kosong" });
+    }
+
+    const cleanCodes = codes.map((c: string) => {
+      const str = String(c);
+      return str.startsWith("TX-") ? str.split("-").slice(2).join("-") : str;
+    });
+
+    const result = await prisma.$transaction(async (tx) => {
+      const ticketsToDelete = await tx.tickets.findMany({
+        where: {
+          OR: cleanCodes.map(code => ({ code: { contains: code } }))
+        }
+      });
+
+      const ticketIds = ticketsToDelete.map((t) => t.id);
+
+      if (ticketIds.length > 0) {
+        await tx.votes.deleteMany({
+          where: {
+            ticket_id: {
+              in: ticketIds
+            }
+          }
+        });
+
+        await tx.tickets.deleteMany({
+          where: {
+            id: {
+              in: ticketIds
+            }
+          }
+        });
+      }
+
+      const deleteResult = await tx.transactions.deleteMany({
+        where: {
+          OR: cleanCodes.map(code => ({ code: { contains: code } }))
+        }
+      });
+
+      return { success: true, deletedCount: deleteResult.count };
+    });
+
+    clearLeaderboardCache();
+    res.status(200).json({
+      message: `${result.deletedCount} transaksi dan seluruh suara terkait berhasil dihapus!`,
+      count: result.deletedCount
+    });
+  } catch (error: any) {
+    console.error("Gagal bulk delete transaksi:", error);
+    res.status(500).json({ message: error.message || "Gagal menghapus transaksi secara massal", error });
+  }
+};
+
 export const submitOfflineVotes = async (req: Request, res: Response) => {
   try {
     const { finalistId, votesCount, voterEmail } = req.body;

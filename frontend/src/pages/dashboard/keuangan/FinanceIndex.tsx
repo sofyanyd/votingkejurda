@@ -27,6 +27,7 @@ export default function FinanceIndex() {
     fetchTransactions, 
     approveTransaction, 
     deleteTransaction, 
+    bulkDeleteTransactions,
     addOfflineVote 
   } = useTransactionStore();
 
@@ -35,6 +36,9 @@ export default function FinanceIndex() {
   // Navigation Tab State
   const [activeTab, setActiveTab] = useState<"Dashboard" | "Detail Laporan" | "Histori Transaksi" | "Kelola QR Code" | "Tambah Vote Offline">("Dashboard");
   
+  // Selection State for Bulk Delete
+  const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
+
   // Filters State
   const [selectedMonth, setSelectedMonth] = useState("Semua");
   const [search, setSearch] = useState("");
@@ -102,8 +106,48 @@ export default function FinanceIndex() {
     const success = await deleteTransaction(transactionCode);
     if (success) {
       showToast("Transaksi dan suara terkait berhasil dihapus!", "success");
+      setSelectedCodes((prev) => prev.filter((c) => c !== transactionCode));
     } else {
       showToast("Gagal menghapus transaksi.", "error");
+    }
+  };
+
+  const handleToggleSelect = (code: string) => {
+    setSelectedCodes((prev) =>
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
+    );
+  };
+
+  const handleSelectAll = () => {
+    const visibleCodes = groupedTransactionsList.map((tx: any) => tx.paymentCode);
+    const isAllSelected = visibleCodes.length > 0 && visibleCodes.every((c: string) => selectedCodes.includes(c));
+    if (isAllSelected) {
+      setSelectedCodes((prev) => prev.filter((c) => !visibleCodes.includes(c)));
+    } else {
+      setSelectedCodes((prev) => Array.from(new Set([...prev, ...visibleCodes])));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedCodes.length === 0) return;
+
+    const selectedItems = groupedTransactionsList.filter((tx: any) => selectedCodes.includes(tx.paymentCode));
+    const lunasCount = selectedItems.filter((tx: any) => tx.status === "Lunas").length;
+
+    let confirmMessage = `Apakah Anda yakin ingin menghapus ${selectedCodes.length} transaksi yang dipilih?`;
+    if (lunasCount > 0) {
+      confirmMessage = `⚠️ PERINGATAN: Terdapat ${lunasCount} transaksi berstatus LUNAS dari total ${selectedCodes.length} transaksi yang dipilih.\nMenghapus transaksi lunas akan otomatis mengurangi perolehan suara (vote) tim terkait.\n\nYakin ingin melanjutkan penghapusan massal?`;
+    }
+
+    if (!window.confirm(confirmMessage)) return;
+
+    showToast(`Menghapus ${selectedCodes.length} transaksi...`, "loading");
+    const success = await bulkDeleteTransactions(selectedCodes);
+    if (success) {
+      showToast(`${selectedCodes.length} transaksi berhasil dihapus!`, "success");
+      setSelectedCodes([]);
+    } else {
+      showToast("Gagal menghapus beberapa transaksi.", "error");
     }
   };
 
@@ -548,61 +592,122 @@ export default function FinanceIndex() {
 
       {/* Histori Transaksi Tab */}
       {activeTab === "Histori Transaksi" && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
-                <tr>
-                  <th className="py-4 px-6 font-bold text-xs uppercase tracking-wider">ID & Waktu</th>
-                  <th className="py-4 px-6 font-bold text-xs uppercase tracking-wider">Detail Pembelian</th>
-                  <th className="py-4 px-6 font-bold text-xs uppercase tracking-wider text-right">Nominal</th>
-                  <th className="py-4 px-6 font-bold text-xs uppercase tracking-wider text-center">Status</th>
-                  <th className="py-4 px-6 font-bold text-xs uppercase tracking-wider text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {groupedTransactionsList.map((tx) => (
-                  <tr key={tx.paymentCode} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="font-bold text-slate-800">{tx.paymentCode}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">{tx.date}</div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="font-bold text-slate-700 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => handleOpenDetails(tx)}>
-                        {tx.items.length === 1 ? tx.items[0].namaKlub : `${tx.items[0].namaKlub} (+${tx.items.length - 1} Item)`}
-                      </div>
-                      <div className="text-xs text-slate-500 mt-0.5">{tx.voterEmail} &bull; <span className="font-bold text-slate-600">{tx.totalVotes} Vote</span></div>
-                    </td>
-                    <td className="py-4 px-6 text-right font-black text-slate-800">
-                      {formatCurrency(tx.grandTotal || tx.totalAmount)}
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <span className={`px-2.5 py-1 rounded-md font-bold text-[10px] uppercase tracking-wider ${
-                        tx.status === "Lunas" ? "bg-emerald-100 text-emerald-700" :
-                        tx.status === "Pending" ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"
-                      }`}>
-                        {tx.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex justify-end gap-2">
-                        {tx.status === "Pending" && (
-                          <button onClick={() => handleApproveManual(tx.paymentCode)} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors">
-                            ACC
-                          </button>
-                        )}
-                        <button onClick={() => handleDeleteTransaction(tx.paymentCode, tx.status)} className="p-1.5 bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-400 rounded-lg transition-colors">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+        <div className="space-y-4">
+          {/* Bulk Action Bar */}
+          {selectedCodes.length > 0 && (
+            <div className="bg-slate-900 text-white p-4 px-6 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xl border border-slate-800 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 font-black flex items-center justify-center text-sm border border-emerald-500/30">
+                  {selectedCodes.length}
+                </span>
+                <div>
+                  <p className="font-bold text-sm text-white">
+                    {selectedCodes.length} Transaksi Terpilih
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Pilih opsi untuk menghapus semua transaksi yang ditandai sekaligus.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <button
+                  onClick={() => setSelectedCodes([])}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Batal Pilih
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black transition-all flex items-center gap-1.5 shadow-md shadow-rose-600/30 hover:scale-[1.02] cursor-pointer"
+                >
+                  <Trash2 size={14} /> Hapus Terpilih ({selectedCodes.length})
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
+                  <tr>
+                    <th className="py-4 px-4 w-12 text-center">
+                      <input
+                        type="checkbox"
+                        checked={
+                          groupedTransactionsList.length > 0 &&
+                          groupedTransactionsList.every((tx: any) => selectedCodes.includes(tx.paymentCode))
+                        }
+                        onChange={handleSelectAll}
+                        className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600"
+                        title="Pilih Semua / Batal Semua"
+                      />
+                    </th>
+                    <th className="py-4 px-4 font-bold text-xs uppercase tracking-wider">ID & Waktu</th>
+                    <th className="py-4 px-6 font-bold text-xs uppercase tracking-wider">Detail Pembelian</th>
+                    <th className="py-4 px-6 font-bold text-xs uppercase tracking-wider text-right">Nominal</th>
+                    <th className="py-4 px-6 font-bold text-xs uppercase tracking-wider text-center">Status</th>
+                    <th className="py-4 px-6 font-bold text-xs uppercase tracking-wider text-right">Aksi</th>
                   </tr>
-                ))}
-                {groupedTransactionsList.length === 0 && (
-                  <tr><td colSpan={5} className="py-12 text-center text-slate-500 font-medium">Tidak ada transaksi ditemukan.</td></tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {groupedTransactionsList.map((tx: any) => {
+                    const isSelected = selectedCodes.includes(tx.paymentCode);
+                    return (
+                      <tr 
+                        key={tx.paymentCode} 
+                        className={`transition-colors ${isSelected ? "bg-emerald-50/70 hover:bg-emerald-100/60" : "hover:bg-slate-50/50"}`}
+                      >
+                        <td className="py-4 px-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleSelect(tx.paymentCode)}
+                            className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600"
+                          />
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="font-bold text-slate-800">{tx.paymentCode}</div>
+                          <div className="text-xs text-slate-500 mt-0.5">{tx.date}</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="font-bold text-slate-700 cursor-pointer hover:text-emerald-600 transition-colors" onClick={() => handleOpenDetails(tx)}>
+                            {tx.items.length === 1 ? tx.items[0].namaKlub : `${tx.items[0].namaKlub} (+${tx.items.length - 1} Item)`}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-0.5">{tx.voterEmail} &bull; <span className="font-bold text-slate-600">{tx.totalVotes} Vote</span></div>
+                        </td>
+                        <td className="py-4 px-6 text-right font-black text-slate-800">
+                          {formatCurrency(tx.grandTotal || tx.totalAmount)}
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <span className={`px-2.5 py-1 rounded-md font-bold text-[10px] uppercase tracking-wider ${
+                            tx.status === "Lunas" ? "bg-emerald-100 text-emerald-700" :
+                            tx.status === "Pending" ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"
+                          }`}>
+                            {tx.status}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex justify-end gap-2">
+                            {tx.status === "Pending" && (
+                              <button onClick={() => handleApproveManual(tx.paymentCode)} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer">
+                                ACC
+                              </button>
+                            )}
+                            <button onClick={() => handleDeleteTransaction(tx.paymentCode, tx.status)} className="p-1.5 bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-400 rounded-lg transition-colors cursor-pointer" title="Hapus transaksi ini">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {groupedTransactionsList.length === 0 && (
+                    <tr><td colSpan={6} className="py-12 text-center text-slate-500 font-medium">Tidak ada transaksi ditemukan.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

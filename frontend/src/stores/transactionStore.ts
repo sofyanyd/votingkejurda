@@ -21,6 +21,7 @@ interface TransactionState {
   addTransaction: (cart: { id: number; name: string; qty: number; price: number }[], transactionCode?: string) => Promise<{ transactionCode: string; grandTotal: number; kodeUnik: number } | null>;
   approveTransaction: (transactionCode: string) => Promise<boolean>;
   deleteTransaction: (transactionCode: string) => Promise<boolean>;
+  bulkDeleteTransactions: (codes: string[]) => Promise<boolean>;
   addOfflineVote: (finalistId: number, namaKlub: string, votesCount: number, voterEmail?: string) => Promise<boolean>;
   createDokuPayment: (params: { teamId?: number; quantity?: number; cart?: any[]; voterEmail?: string }) => Promise<{ invoiceId: string; amount: number; status: string; qrContent: string; expiresAt: string } | null>;
   checkDokuPaymentStatus: (invoiceId: string) => Promise<{ invoiceId: string; status: string } | null>;
@@ -83,6 +84,25 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     } catch (error) {
       console.error("Gagal menghapus transaksi:", error);
       // Rollback jika gagal
+      get().fetchTransactions();
+      return false;
+    }
+  },
+
+  bulkDeleteTransactions: async (codes: string[]) => {
+    try {
+      // Optimistic update: hapus semua kode terpilih dari local state
+      set({
+        transactions: get().transactions.filter(tx => {
+          const pCode = tx.id.startsWith("TX-") ? tx.id.split("-").slice(2).join("-") : tx.id;
+          return !codes.includes(pCode) && !codes.includes(tx.id);
+        })
+      });
+      await axios.post(`${API_BASE_URL}/votes/transactions/bulk-delete`, { codes });
+      get().fetchTransactions();
+      return true;
+    } catch (error) {
+      console.error("Gagal menghapus transaksi massal:", error);
       get().fetchTransactions();
       return false;
     }

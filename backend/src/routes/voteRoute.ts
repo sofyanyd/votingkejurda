@@ -6,6 +6,7 @@ import {
   requestPayment,
   finalizePayment,
   deleteTransaction,
+  bulkDeleteTransactions,
   submitOfflineVotes
 } from "../controllers/voteController.js";
 
@@ -20,6 +21,7 @@ router.post("/request-payment", requestPayment);
 router.post("/finalize-payment", requireAdmin, finalizePayment); // Mengamankan tombol ACC agar hanya bisa dipanggil oleh Admin
 router.post("/submit-offline", requireAdmin, submitOfflineVotes);
 router.post("/offline", requireAdmin, submitOfflineVotes); // Alias untuk frontend compatibility
+router.post("/transactions/bulk-delete", requireAdmin, bulkDeleteTransactions);
 router.delete("/transactions/:code", requireAdmin, deleteTransaction);
 
 // Endpoint untuk menangkap notifikasi Moota dinonaktifkan demi keamanan karena beralih ke alur persetujuan manual (ACC) admin
