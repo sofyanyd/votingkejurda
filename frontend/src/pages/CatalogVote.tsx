@@ -156,7 +156,7 @@ export default function CatalogVote() {
             </div>
           )}
           
-          {loading ? (
+          {loading && participants.length === 0 ? (
             <div className="text-center py-20 text-slate-400 font-bold bg-white rounded-3xl border border-slate-100 shadow-sm">
               Memuat data katalog...
             </div>

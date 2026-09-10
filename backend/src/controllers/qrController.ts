@@ -1,14 +1,28 @@
 import { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
 
+let qrCache: any = null;
+let qrCacheTime = 0;
+
+export const clearQrCache = () => {
+  qrCache = null;
+  qrCacheTime = 0;
+};
+
 // GET ALL QR CODES
 export const getQrCodes = async (req: Request, res: Response) => {
   try {
+    const now = Date.now();
+    if (qrCache && (now - qrCacheTime < 30000)) {
+      return res.status(200).json(qrCache);
+    }
     const qrCodes = await prisma.qrcodes.findMany({
       orderBy: {
         id: "desc",
       },
     });
+    qrCache = qrCodes;
+    qrCacheTime = now;
     res.status(200).json(qrCodes);
   } catch (error: any) {
     console.error("Gagal mengambil data QR Code:", error);
@@ -41,6 +55,7 @@ export const createQrCode = async (req: Request, res: Response) => {
       },
     });
 
+    clearQrCache();
     res.status(201).json(newQr);
   } catch (error: any) {
     console.error("Gagal membuat QR Code:", error);
@@ -79,6 +94,7 @@ export const updateQrCode = async (req: Request, res: Response) => {
       },
     });
 
+    clearQrCache();
     res.status(200).json(updatedQr);
   } catch (error: any) {
     console.error("Gagal mengupdate QR Code:", error);
@@ -93,6 +109,7 @@ export const deleteQrCode = async (req: Request, res: Response) => {
     await prisma.qrcodes.delete({
       where: { id: Number(id) },
     });
+    clearQrCache();
     res.status(200).json({ message: "QR Code berhasil dihapus" });
   } catch (error: any) {
     console.error("Gagal menghapus QR Code:", error);

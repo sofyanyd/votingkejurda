@@ -1,16 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { API_BASE_URL } from "../config";
 import Button from "../components/ui/Button"; 
 import { Collapse } from "../components/ui/Collapse";
 import { Calendar, MapPin, CheckCircle, Users, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { usePletonStore } from "../stores/pletonStore";
 
 export default function Peserta() {
   const navigate = useNavigate();
-
-  const [finalists, setFinalists] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { pletonList, loading, fetchPleton } = usePletonStore();
   const [selectedCategory, setSelectedCategory] = useState<number | "Semua">("Semua");
 
   const categoryOptions = [
@@ -22,36 +19,26 @@ export default function Peserta() {
   ];
 
   useEffect(() => {
-    const fetchFinalists = async () => {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/speakers`);
-        const rawData = Array.isArray(response.data) ? response.data : [];
-        const mapped = rawData.map((item: any) => {
-          let no_urut = "01";
-          let role = item.bidang;
-          if (item.bidang.startsWith("No. ") && item.bidang.includes(" - ")) {
-            const parts = item.bidang.substring(4).split(" - ");
-            no_urut = parts[0].trim();
-            role = parts[1].trim();
-          }
-          return {
-            id: item.id,
-            name: item.nama,
-            role: role,
-            no_urut: no_urut,
-            category_id: item.category_id,
-            imageUrl: item.foto_url || `https://via.placeholder.com/400x400.png?text=${encodeURIComponent(item.nama)}`
-          };
-        });
-        setFinalists(mapped);
-      } catch (error) {
-        console.error("Gagal mengambil data finalis:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFinalists();
+    fetchPleton();
   }, []);
+
+  const finalists = (pletonList || []).map((item: any) => {
+    let no_urut = "01";
+    let role = item.bidang;
+    if (item.bidang.startsWith("No. ") && item.bidang.includes(" - ")) {
+      const parts = item.bidang.substring(4).split(" - ");
+      no_urut = parts[0].trim();
+      role = parts[1].trim();
+    }
+    return {
+      id: item.id,
+      name: item.nama,
+      role: role,
+      no_urut: no_urut,
+      category_id: item.category_id,
+      imageUrl: item.foto_url || `https://via.placeholder.com/400x400.png?text=${encodeURIComponent(item.nama)}`
+    };
+  });
 
   const CATEGORY_PRIORITY: Record<number, number> = {
     2: 1, // U13
@@ -181,7 +168,7 @@ export default function Peserta() {
           })}
         </div>
 
-        {loading ? (
+        {loading && finalists.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-10 h-10 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
             <p className="text-slate-500 font-semibold text-sm">Menyelaraskan data...</p>

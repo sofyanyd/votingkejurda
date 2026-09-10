@@ -14,7 +14,7 @@ export default function Dukungan() {
     {
       icon: CreditCard,
       title: "2. Checkout & Bayar",
-      desc: "Lakukan pembayaran secara instan dan aman menggunakan metode pembayaran standar QRIS atau e-wallet."
+      desc: "Lakukan pembayaran secara instan dengan menggunakan GoPay."
     },
     {
       icon: Zap,

@@ -1,35 +1,29 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
-import { API_BASE_URL } from "../config";
 import Button from "../components/ui/Button"; 
 import { Collapse } from "../components/ui/Collapse";
 import { ShieldCheck, Ticket, BarChart3, ChevronRight, Trophy, Flame, TrendingUp } from "lucide-react";
+import { useLeaderboardStore } from "../stores/leaderboardStore";
+import { usePletonStore } from "../stores/pletonStore";
 
 export default function Dashboard() {
     const navigate = useNavigate(); 
-    const [top3Leaderboard, setTop3Leaderboard] = useState<any[]>([]);
+    const { standings, fetchLeaderboard } = useLeaderboardStore();
+    const fetchPleton = usePletonStore((state) => state.fetchPleton);
 
     useEffect(() => {
-      const fetchTop3 = async () => {
-        try {
-          const res = await axios.get(`${API_BASE_URL}/votes/leaderboard`);
-          const data = Array.isArray(res.data) ? res.data : [];
-          const top3 = data.slice(0, 3).map((item: any) => ({
-            rank: item.rank,
-            name: item.nama,
-            region: item.instansi,
-            votes: (item.votes || 0).toLocaleString("id-ID"),
-            trend: `${item.percentage || 0}% total suara`,
-            isHot: item.rank === 1
-          }));
-          setTop3Leaderboard(top3);
-        } catch (error) {
-          console.error("Gagal mengambil data Top 3:", error);
-        }
-      };
-      fetchTop3();
+      fetchLeaderboard();
+      fetchPleton(); // Pre-fetch pleton in background so other pages load instantly!
     }, []);
+
+    const top3Leaderboard = (standings || []).slice(0, 3).map((item: any) => ({
+      rank: item.rank,
+      name: item.nama,
+      region: item.instansi,
+      votes: (item.votes || 0).toLocaleString("id-ID"),
+      trend: `${item.percentage || 0}% total suara`,
+      isHot: item.rank === 1
+    }));
 
     const faqItems = [
         { title: "Mengenai Voting KEJURDA 2026", description: "Sistem voting resmi dan eksklusif untuk menentukan Juara Favorit pada Lomba Olahraga Baris Berbaris (LOBB) Tingkat Daerah (KEJURDA) Tahun 2026." },

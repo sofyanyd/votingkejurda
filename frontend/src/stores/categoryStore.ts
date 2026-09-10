@@ -21,8 +21,10 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
   categories: [],
   loading: false,
 
-  fetchCategories: async () => {
-    set({ loading: true });
+  fetchCategories: async (force = false) => {
+    if (get().categories.length === 0 || force) {
+      set({ loading: true });
+    }
     try {
       const res = await axios.get(`${API_BASE_URL}/categories`);
       set({ categories: Array.isArray(res.data) ? res.data : [], loading: false });

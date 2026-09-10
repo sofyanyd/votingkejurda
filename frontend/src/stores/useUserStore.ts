@@ -23,8 +23,10 @@ export const useUserStore = create<UserState>((set, get) => ({
   userList: [],
   loading: false,
 
-  fetchUsers: async () => {
-    set({ loading: true });
+  fetchUsers: async (force = false) => {
+    if (get().userList.length === 0 || force) {
+      set({ loading: true });
+    }
     try {
       const res = await axios.get(`${API_BASE_URL}/auth/users`);
       set({ userList: Array.isArray(res.data) ? res.data : [], loading: false });

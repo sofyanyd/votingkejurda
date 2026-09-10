@@ -24,8 +24,10 @@ export const usePletonStore = create<PletonState>((set, get) => ({
   pletonList: [],
   loading: false,
 
-  fetchPleton: async () => {
-    set({ loading: true });
+  fetchPleton: async (force = false) => {
+    if (get().pletonList.length === 0 || force) {
+      set({ loading: true });
+    }
     try {
       const res = await axios.get(`${API_BASE_URL}/speakers`);
       set({ pletonList: Array.isArray(res.data) ? res.data : [], loading: false });

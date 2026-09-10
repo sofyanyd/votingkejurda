@@ -1,29 +1,16 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
-import { API_BASE_URL } from "../config";
 import { Collapse } from "../components/ui/Collapse";
 import { Trophy, Activity, AlertCircle, Medal, Crown } from "lucide-react";
+import { useLeaderboardStore } from "../stores/leaderboardStore";
 
 export default function Leaderboard() {
-  const [standings, setStandings] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { standings, loading, fetchLeaderboard } = useLeaderboardStore();
   const [selectedCategory, setSelectedCategory] = useState<number | "Semua">("Semua");
 
   useEffect(() => {
-    const fetchStandings = async () => {
-      try {
-        const res = await axios.get(`${API_BASE_URL}/votes/leaderboard`);
-        setStandings(Array.isArray(res.data) ? res.data : []);
-      } catch (error) {
-        console.error("Gagal mengambil data leaderboard:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStandings();
+    fetchLeaderboard();
     // Polling setiap 10 detik untuk update real-time
-    const interval = setInterval(fetchStandings, 10000);
+    const interval = setInterval(() => fetchLeaderboard(false), 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -114,7 +101,7 @@ export default function Leaderboard() {
           </div>
 
           {/* ── PODIUM DISPLAY ── */}
-          {loading ? (
+          {loading && standings.length === 0 ? (
             <div className="text-center py-10 flex flex-col items-center">
                 <div className="w-8 h-8 border-3 border-slate-700 border-t-emerald-500 rounded-full animate-spin mb-3"></div>
                 <p className="text-slate-400 font-semibold uppercase tracking-widest text-xs">Menyinkronkan Server...</p>

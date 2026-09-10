@@ -23,8 +23,10 @@ export const useQrCodeStore = create<QrState>((set, get) => ({
   qrList: [],
   loading: false,
 
-  fetchQrCodes: async () => {
-    set({ loading: true });
+  fetchQrCodes: async (force = false) => {
+    if (get().qrList.length === 0 || force) {
+      set({ loading: true });
+    }
     try {
       const res = await axios.get(`${API_BASE_URL}/qrcodes`);
       set({ qrList: Array.isArray(res.data) ? res.data : [], loading: false });
