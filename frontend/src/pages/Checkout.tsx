@@ -203,11 +203,11 @@ export default function Checkout() {
 
                     <div className="bg-emerald-50/80 border border-emerald-100 text-emerald-900 p-4 rounded-2xl text-xs font-medium leading-relaxed w-full space-y-1">
                       <p className="font-bold text-emerald-950">💡 Petunjuk Transfer m-Banking:</p>
-                      <ol className="list-decimal list-inside space-y-0.5 text-[11px] text-emerald-800">
-                        <li>Buka m-Banking (BCA, Mandiri, BRI, BNI, SeaBank, Dana, dll).</li>
-                        <li>Pilih menu **Transfer $\rightarrow$ Virtual Account** (atau Transfer antar bank ke {bankName}).</li>
-                        <li>Masukkan nomor VA di atas dan nominal <strong className="font-bold">{formatCurrency(amount)}</strong>.</li>
-                        <li>Konfirmasi transfer. Status akan otomatis berubah menjadi <strong className="font-bold">PAID</strong>.</li>
+                      <ol className="list-decimal list-inside space-y-1 text-[11px] text-emerald-800">
+                        <li>Buka aplikasi m-Banking Anda (BCA, Mandiri, BRI, BNI, SeaBank, Dana, GoPay, dll).</li>
+                        <li>Pilih menu <strong className="font-bold">Transfer &rarr; Virtual Account</strong> (atau Transfer ke Bank {bankName}).</li>
+                        <li>Masukkan nomor Virtual Account di atas dan sertakan nominal tepat <strong className="font-bold">{formatCurrency(amount)}</strong>.</li>
+                        <li>Konfirmasi transaksi. Status pembayaran akan otomatis diperbarui menjadi <strong className="font-bold">PAID</strong>.</li>
                       </ol>
                     </div>
                   </div>
@@ -242,16 +242,6 @@ export default function Checkout() {
                     )}
                   </div>
                 )}
-
-                {/* Developer Sandbox Test Button */}
-                <button
-                  onClick={handleSimulateWebhook}
-                  disabled={simulating}
-                  className="mt-4 text-[10px] font-bold text-slate-400 hover:text-emerald-600 transition-colors underline flex items-center gap-1 cursor-pointer"
-                  title="Simulasikan notifikasi webhook DOKU untuk pengujian"
-                >
-                  {simulating ? <Loader2 size={12} className="animate-spin" /> : "⚡ Test Sandbox: Simulasikan Pembayaran Sukses"}
-                </button>
               </Card>
 
               {/* KANAN: RINGKASAN ORDER */}
