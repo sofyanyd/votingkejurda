@@ -305,9 +305,12 @@ export const requestDokuVirtualAccount = async (params: {
     throw new Error(`DOKU VA API tidak mengembalikan nomor VA. Response: ${JSON.stringify(data)}`);
   }
 
+  const howToPayPage = data.virtual_account_info?.how_to_pay_page || "";
+
   return {
     vaNumber: vaNumber,
     bankName: bank,
+    howToPayPage: howToPayPage,
     dokuReference: data.order?.invoice_number || data.response?.invoice_number || params.invoiceId,
     expiresAt: new Date(Date.now() + 60 * 60 * 1000)
   };

@@ -78,41 +78,24 @@ export const createDokuPayment = async (req: Request, res: Response) => {
       }
     });
 
-    let dokuResult: any = null;
-
-    const invoiceDigits = invoiceId.replace(/\D/g, "").slice(-8);
-    // Permata VA with Merchant BIN 89659999 (Configured in DOKU Dashboard for FORBASI)
-    const permataVaNumber = `89659999${invoiceDigits}`;
-
     if (selectedMethod === "VA") {
-      // 1. Try DOKU Checkout V1 Payment Link (Supports SNAP VAs like BRI, BNI, Mandiri, Permata)
-      try {
-        const checkoutRes = await requestDokuCheckout({
-          invoiceId,
-          amount: totalAmount,
-          customerEmail: email
-        });
+      const requestedBank = (bankCode || "PERMATA").toUpperCase();
+      const vaRes = await requestDokuVirtualAccount({
+        invoiceId,
+        amount: totalAmount,
+        bankCode: requestedBank,
+        customerEmail: email
+      });
 
-        dokuResult = {
-          paymentMethod: "VA",
-          paymentUrl: checkoutRes.paymentUrl,
-          vaNumber: permataVaNumber,
-          bankName: "PERMATA",
-          dokuReference: checkoutRes.dokuReference,
-          expiresAt: checkoutRes.expiresAt,
-          qrContent: checkoutRes.paymentUrl
-        };
-      } catch (checkoutErr: any) {
-        console.warn("[DOKU] Checkout V1 failed, using permata VA fallback:", checkoutErr?.message);
-        dokuResult = {
-          paymentMethod: "VA",
-          vaNumber: permataVaNumber,
-          bankName: "PERMATA",
-          dokuReference: invoiceId,
-          expiresAt: new Date(Date.now() + 60 * 60 * 1000),
-          qrContent: `VA:PERMATA:${permataVaNumber}`
-        };
-      }
+      dokuResult = {
+        paymentMethod: "VA",
+        vaNumber: vaRes.vaNumber,
+        bankName: vaRes.bankName,
+        howToPayPage: vaRes.howToPayPage || undefined,
+        dokuReference: vaRes.dokuReference,
+        expiresAt: vaRes.expiresAt,
+        qrContent: `VA:${vaRes.bankName}:${vaRes.vaNumber}`
+      };
     } else {
       const qrisRes = await requestDokuDynamicQris({
         invoiceId,
@@ -127,7 +110,6 @@ export const createDokuPayment = async (req: Request, res: Response) => {
         expiresAt: qrisRes.expiresAt
       };
     }
-
 
     // Save QR / VA content & DOKU reference into DB
     await prisma.transactions.update({
@@ -147,12 +129,13 @@ export const createDokuPayment = async (req: Request, res: Response) => {
       pricePerVote: pricePerVote,
       status: "PENDING",
       paymentMethod: dokuResult.paymentMethod,
-      paymentUrl: dokuResult.paymentUrl || undefined,
       vaNumber: dokuResult.vaNumber || undefined,
       bankName: dokuResult.bankName || undefined,
+      howToPayPage: dokuResult.howToPayPage || undefined,
       qrContent: dokuResult.qrContent,
       expiresAt: dokuResult.expiresAt.toISOString()
     });
+
   } catch (error: any) {
     console.error("Gagal membuat pembayaran DOKU:", error);
     return res.status(500).json({ message: error.message || "Gagal membuat transaksi pembayaran" });
