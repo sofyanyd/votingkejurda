@@ -24,6 +24,7 @@ export default function Checkout() {
   const amount = invoiceData?.amount || totalPrice;
   const paymentMethod = invoiceData?.paymentMethod || "VA";
   const bankName = invoiceData?.bankName || "BRI / PERMATA";
+  const paymentUrl = invoiceData?.paymentUrl;
   const vaNumber = invoiceData?.vaNumber || (qrContent.startsWith("VA:") ? qrContent.split(":")[2] : "");
 
   // Real-time status polling effect
@@ -153,12 +154,10 @@ export default function Checkout() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-4">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                  Pembayaran <span className="text-emerald-600">{paymentMethod === "VA" ? `Virtual Account (${bankName})` : "Dynamic QRIS"}</span>
+                  Pembayaran <span className="text-emerald-600">Virtual Account SNAP</span>
                 </h1>
                 <p className="text-slate-500 text-xs sm:text-sm font-medium">
-                  {paymentMethod === "VA" 
-                    ? "Transfer dari m-Banking bank manapun (BCA, Mandiri, BRI, BNI, SeaBank, Dana, dll)." 
-                    : "Scan QRIS menggunakan aplikasi Mobile Banking atau E-Wallet."}
+                  Transfer dari m-Banking bank manapun (BRI, BNI, Mandiri, Permata, BCA, dll).
                 </p>
               </div>
               
@@ -170,9 +169,48 @@ export default function Checkout() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               
-              {/* KIRI: VA / QRIS CONTAINER */}
+              {/* KIRI: VA / CHECKOUT CONTAINER */}
               <Card className="p-6 border-slate-200 flex flex-col items-center shadow-md">
-                {paymentMethod === "VA" || vaNumber ? (
+                {paymentUrl ? (
+                  <div className="w-full flex flex-col items-center">
+                    <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                      <span className="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
+                        <Building2 size={16} className="text-emerald-600" /> Virtual Account (SNAP Official)
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400 font-bold">DOKU SNAP</span>
+                    </div>
+
+                    <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-5 w-full text-center mb-4 flex flex-col items-center gap-3">
+                      <span className="text-xs font-bold text-slate-700">
+                        Pilih Bank (BRI, BNI, Mandiri, Permata) & Dapatkan Nomor VA SNAP Resmi:
+                      </span>
+                      
+                      <a
+                        href={paymentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-4 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm rounded-2xl transition-all shadow-lg shadow-emerald-500/20 text-center flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02]"
+                      >
+                        <Building2 size={18} /> Bayar via Virtual Account (DOKU SNAP) &rarr;
+                      </a>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-slate-500 text-xs font-bold bg-slate-100 px-4 py-2 rounded-xl mb-4 w-full justify-center">
+                      <Clock size={14} className="text-emerald-600 animate-spin" />
+                      <span>Sistem otomatis mendeteksi pembayaran</span>
+                    </div>
+
+                    <div className="bg-emerald-50/80 border border-emerald-100 text-emerald-900 p-4 rounded-2xl text-xs font-medium leading-relaxed w-full space-y-1">
+                      <p className="font-bold text-emerald-950">💡 Cara Pembayaran:</p>
+                      <ol className="list-decimal list-inside space-y-1 text-[11px] text-emerald-800">
+                        <li>Klik tombol <strong className="font-bold">Bayar via Virtual Account</strong> di atas.</li>
+                        <li>Pilih bank Anda (misal <strong className="font-bold">BRI Virtual Account</strong>).</li>
+                        <li>Salin nomor BRIVA yang diberikan DOKU.</li>
+                        <li>Buka BRImo &rarr; Pembayaran &rarr; BRIVA &rarr; Konfirmasi Bayar.</li>
+                      </ol>
+                    </div>
+                  </div>
+                ) : (paymentMethod === "VA" || vaNumber) ? (
                   <div className="w-full flex flex-col items-center">
                     <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                       <span className="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
-import { requestDokuDynamicQris, requestDokuVirtualAccount, verifyDokuWebhookSignature } from "../lib/doku.js";
+import { requestDokuDynamicQris, requestDokuVirtualAccount, requestDokuCheckout, verifyDokuWebhookSignature } from "../lib/doku.js";
 import { clearLeaderboardCache, IS_VOTING_CLOSED } from "./voteController.js";
 
 const DEFAULT_PRICE_PER_VOTE = Number(process.env.PRICE_PER_VOTE) || 2000;
@@ -81,21 +81,39 @@ export const createDokuPayment = async (req: Request, res: Response) => {
     let dokuResult: any = null;
 
     if (selectedMethod === "VA") {
-      const vaRes = await requestDokuVirtualAccount({
-        invoiceId,
-        amount: totalAmount,
-        bankCode: bankCode || "BRI",
-        customerEmail: email
-      });
+      // 1. Try DOKU Checkout V1 Payment Link (Supports SNAP VAs like BRI, BNI, Mandiri, Permata)
+      try {
+        const checkoutRes = await requestDokuCheckout({
+          invoiceId,
+          amount: totalAmount,
+          customerEmail: email
+        });
 
-      dokuResult = {
-        paymentMethod: "VA",
-        vaNumber: vaRes.vaNumber,
-        bankName: vaRes.bankName,
-        dokuReference: vaRes.dokuReference,
-        expiresAt: vaRes.expiresAt,
-        qrContent: `VA:${vaRes.bankName}:${vaRes.vaNumber}`
-      };
+        dokuResult = {
+          paymentMethod: "VA",
+          paymentUrl: checkoutRes.paymentUrl,
+          dokuReference: checkoutRes.dokuReference,
+          expiresAt: checkoutRes.expiresAt,
+          qrContent: checkoutRes.paymentUrl
+        };
+      } catch (checkoutErr: any) {
+        console.warn("[DOKU] Checkout V1 failed, trying direct V2 VA endpoint:", checkoutErr?.message);
+        const vaRes = await requestDokuVirtualAccount({
+          invoiceId,
+          amount: totalAmount,
+          bankCode: bankCode || "BRI",
+          customerEmail: email
+        });
+
+        dokuResult = {
+          paymentMethod: "VA",
+          vaNumber: vaRes.vaNumber,
+          bankName: vaRes.bankName,
+          dokuReference: vaRes.dokuReference,
+          expiresAt: vaRes.expiresAt,
+          qrContent: `VA:${vaRes.bankName}:${vaRes.vaNumber}`
+        };
+      }
     } else {
       const qrisRes = await requestDokuDynamicQris({
         invoiceId,
@@ -129,6 +147,7 @@ export const createDokuPayment = async (req: Request, res: Response) => {
       pricePerVote: pricePerVote,
       status: "PENDING",
       paymentMethod: dokuResult.paymentMethod,
+      paymentUrl: dokuResult.paymentUrl || undefined,
       vaNumber: dokuResult.vaNumber || undefined,
       bankName: dokuResult.bankName || undefined,
       qrContent: dokuResult.qrContent,
@@ -139,6 +158,7 @@ export const createDokuPayment = async (req: Request, res: Response) => {
     return res.status(500).json({ message: error.message || "Gagal membuat transaksi pembayaran" });
   }
 };
+
 
 /**
  * POST /api/payment/doku/webhook

@@ -312,3 +312,89 @@ export const requestDokuVirtualAccount = async (params: {
     expiresAt: new Date(Date.now() + 60 * 60 * 1000)
   };
 };
+
+/**
+ * Request DOKU Checkout Payment URL (supports all SNAP Virtual Accounts: BRI, BNI, Permata, Mandiri, etc.)
+ */
+export const requestDokuCheckout = async (params: {
+  invoiceId: string;
+  amount: number;
+  customerName?: string;
+  customerEmail?: string;
+}): Promise<{ paymentUrl: string; dokuReference: string; expiresAt: Date }> => {
+  const config = getDokuConfig();
+  const requestId = `REQ-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+  const timestamp = new Date().toISOString();
+  const targetPath = "/checkout/v1/payment";
+
+  const requestBody = {
+    order: {
+      invoice_number: params.invoiceId,
+      amount: params.amount
+    },
+    payment: {
+      payment_due_date: 60
+    },
+    customer: {
+      name: params.customerName || "Voter Kejurda",
+      email: params.customerEmail || "guest@forbasi.com"
+    }
+  };
+
+  const bodyString = JSON.stringify(requestBody);
+
+  if (!config.clientId || !config.secretKey || config.clientId.includes("YOUR_DOKU")) {
+    throw new Error("DOKU credentials belum dikonfigurasi. Set DOKU_CLIENT_ID dan DOKU_SECRET_KEY di environment variables.");
+  }
+
+  const signature = generateDokuSignatureV2(
+    config.clientId,
+    config.secretKey,
+    requestId,
+    timestamp,
+    targetPath,
+    bodyString
+  );
+
+  console.log(`[DOKU CHECKOUT] Requesting URL for invoice: ${params.invoiceId}, amount: ${params.amount}`);
+
+  const response = await fetch(`${config.baseUrl}${targetPath}`, {
+    method: "POST",
+    headers: {
+      "Client-Id": config.clientId,
+      "Request-Id": requestId,
+      "Request-Timestamp": timestamp,
+      "Signature": signature,
+      "Content-Type": "application/json"
+    },
+    body: bodyString
+  });
+
+  const responseText = await response.text();
+  console.log(`[DOKU CHECKOUT] Response status: ${response.status}`);
+  console.log(`[DOKU CHECKOUT] Response body: ${responseText}`);
+
+  if (!response.ok) {
+    throw new Error(`DOKU Checkout API error (${response.status}): ${responseText}`);
+  }
+
+  let data: any;
+  try {
+    data = JSON.parse(responseText);
+  } catch (e) {
+    throw new Error(`DOKU Checkout API returned invalid JSON: ${responseText}`);
+  }
+
+  const paymentUrl = data.response?.payment?.url || data.payment?.url || data.url;
+
+  if (!paymentUrl) {
+    throw new Error(`DOKU Checkout API tidak mengembalikan payment URL. Response: ${responseText}`);
+  }
+
+  return {
+    paymentUrl,
+    dokuReference: data.order?.invoice_number || data.response?.invoice_number || params.invoiceId,
+    expiresAt: new Date(Date.now() + 60 * 60 * 1000)
+  };
+};
+
