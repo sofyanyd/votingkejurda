@@ -4,7 +4,7 @@ export const getDokuConfig = () => {
   const clientId = process.env.DOKU_CLIENT_ID || "";
   const secretKey = process.env.DOKU_SECRET_KEY || "";
   const merchantId = process.env.DOKU_MERCHANT_ID || "";
-  const env = (process.env.DOKU_ENV || "sandbox").toLowerCase();
+  const env = (process.env.DOKU_ENV || "production").toLowerCase();
   
   const baseUrl = env === "production" 
     ? "https://api.doku.com" 
