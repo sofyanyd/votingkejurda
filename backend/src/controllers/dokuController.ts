@@ -17,7 +17,6 @@ export const createDokuPayment = async (req: Request, res: Response) => {
 
     const { teamId, quantity, cart, voterEmail, paymentMethod, bankCode } = req.body;
     const email = voterEmail && typeof voterEmail === "string" ? voterEmail.trim() : "guest@forbasi.com";
-    const selectedMethod = (paymentMethod || "VA").toUpperCase(); // Default to VA for instant active payment
 
     // Support both single team selection and cart array
     let itemsToProcess: { teamId: number; quantity: number }[] = [];
@@ -59,6 +58,13 @@ export const createDokuPayment = async (req: Request, res: Response) => {
 
     const pricePerVote = DEFAULT_PRICE_PER_VOTE;
     const totalAmount = totalVotesCount * pricePerVote;
+
+    // Auto-select payment method: If under Rp 10.000 (e.g. 1-4 votes), default to QRIS 
+    // because Indonesian bank switching & e-wallets restrict interbank VA transfers under Rp 10.000.
+    let selectedMethod = paymentMethod ? String(paymentMethod).toUpperCase() : "";
+    if (!selectedMethod) {
+      selectedMethod = totalAmount < 10000 ? "QRIS" : "VA";
+    }
 
     // Generate unique invoice number: e.g. KJDA-2026-84920412
     const invoiceId = `KJDA-2026-${Math.floor(10000000 + Math.random() * 90000000)}`;
