@@ -15,7 +15,6 @@ export default function Checkout() {
   const invoiceData = location.state?.invoiceData;
 
   const [paymentStatus, setPaymentStatus] = useState<string>(invoiceData?.status || "PENDING");
-  const [simulating, setSimulating] = useState(false);
   const [copied, setCopied] = useState(false);
   const checkStatusFn = useTransactionStore((state) => state.checkDokuPaymentStatus);
 
@@ -65,29 +64,6 @@ export default function Checkout() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Helper function for Sandbox Simulator Testing
-  const handleSimulateWebhook = async () => {
-    if (!invoiceId || simulating) return;
-    setSimulating(true);
-    try {
-      await axios.post(`${API_BASE_URL}/payment/doku/webhook`, {
-        order: {
-          invoice_number: invoiceId,
-          amount: amount
-        },
-        transaction: {
-          status: "SUCCESS",
-          id: `SIM-REF-${Date.now()}`
-        }
-      });
-      setPaymentStatus("PAID");
-    } catch (error) {
-      console.error("Simulation failed:", error);
-      alert("Gagal memicu simulasi webhook.");
-    } finally {
-      setSimulating(false);
-    }
-  };
 
   if (!invoiceData && cart.length === 0) {
     return (
@@ -155,10 +131,10 @@ export default function Checkout() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-4">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                  Pembayaran <span className="text-emerald-600">Virtual Account {bankName}</span>
+                  Pembayaran <span className="text-emerald-600">VA {bankName}</span>
                 </h1>
                 <p className="text-slate-500 text-xs sm:text-sm font-medium">
-                  Transfer dari m-Banking bank manapun (GoPay, BCA, Mandiri, BRI, BNI, Dana, dll).
+                  Transfer dari GoPay.
                 </p>
               </div>
               
@@ -176,13 +152,13 @@ export default function Checkout() {
                   <div className="w-full flex flex-col items-center">
                     <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                       <span className="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
-                        <Building2 size={16} className="text-emerald-600" /> Virtual Account {bankName} (DOKU Official)
+                        <Building2 size={16} className="text-emerald-600" /> VA {bankName}
                       </span>
                       <span className="text-[10px] font-mono text-slate-400 font-bold">DOKU SNAP</span>
                     </div>
 
                     <div className="bg-slate-50 border-2 border-emerald-100 rounded-2xl p-4 w-full text-center mb-4 relative">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Nomor Virtual Account (Resmi Terdaftar)</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Nomor Virtual Account</span>
                       <div className="text-2xl sm:text-3xl font-mono font-black text-emerald-700 tracking-wider">
                         {vaNumber || "8965600000133938"}
                       </div>
@@ -203,7 +179,7 @@ export default function Checkout() {
                         rel="noopener noreferrer"
                         className="w-full mb-4 py-3 px-4 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold text-xs rounded-xl transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
                       >
-                        <Building2 size={14} /> 💡 Petunjuk Cara Transfer Resmi DOKU &rarr;
+                        <Building2 size={14} /> Petunjuk Cara Transfer Resmi DOKU &rarr;
                       </a>
                     )}
 
@@ -213,10 +189,10 @@ export default function Checkout() {
                     </div>
 
                     <div className="bg-emerald-50/80 border border-emerald-100 text-emerald-900 p-4 rounded-2xl text-xs font-medium leading-relaxed w-full space-y-1.5">
-                      <p className="font-bold text-emerald-950">💡 Cara Transfer (GoPay, BCA, Mandiri, Dana, dll):</p>
+                      <p className="font-bold text-emerald-950">💡 Cara Transfer:</p>
                       <ol className="list-decimal list-inside space-y-1 text-[11px] text-emerald-800">
-                        <li>Buka aplikasi <strong className="font-bold">GoPay / m-Banking / E-Wallet</strong> Anda.</li>
-                        <li>Pilih menu <strong className="font-bold">Transfer / Kirim Ke Rekening Bank</strong>.</li>
+                        <li>Buka aplikasi <strong className="font-bold">GoPay</strong> Anda.</li>
+                        <li>Pilih menu <strong className="font-bold">Transfer VA</strong>.</li>
                         <li>Pilih Bank Tujuan: <strong className="font-bold">BANK {bankName}</strong>.</li>
                         <li>Masukkan Nomor VA: <strong className="font-bold">{vaNumber}</strong>.</li>
                         <li>Nama penerima akan otomatis terverifikasi dan pembayaran sukses!</li>
