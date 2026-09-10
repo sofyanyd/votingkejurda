@@ -141,7 +141,7 @@ export default function Checkout() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-4">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                  Pembayaran <span className="text-emerald-600">Dynamic QRIS DOKU</span>
+                  Pembayaran <span className="text-emerald-600">QRIS</span>
                 </h1>
                 <p className="text-slate-500 text-xs sm:text-sm font-medium">Scan QRIS menggunakan aplikasi Mobile Banking atau E-Wallet pilihanmu.</p>
               </div>
@@ -158,7 +158,7 @@ export default function Checkout() {
               <Card className="p-6 border-slate-200 flex flex-col items-center shadow-md">
                 <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                   <span className="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
-                    <QrCode size={16} className="text-emerald-600" /> Dynamic QRIS Code
+                    <QrCode size={16} className="text-emerald-600" /> QRIS Code
                   </span>
                   <span className="text-[10px] font-mono text-slate-400 font-bold">INV: {invoiceId}</span>
                 </div>
@@ -222,7 +222,7 @@ export default function Checkout() {
                       <div key={item.id} className="flex justify-between items-start text-sm border-b border-slate-50 pb-3 last:border-0 last:pb-0">
                         <div>
                           <p className="font-bold text-slate-800">{item.name}</p>
-                          <p className="text-slate-500 font-medium text-xs">{item.qty} Vote x Rp 3.000</p>
+                          <p className="text-slate-500 font-medium text-xs">{item.qty} Vote x {formatCurrency(item.price || 2000)}</p>
                         </div>
                         <p className="font-black text-emerald-600">{formatCurrency(item.qty * item.price)}</p>
                       </div>

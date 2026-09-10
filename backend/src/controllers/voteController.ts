@@ -3,6 +3,7 @@ import prisma from "../lib/prisma.js";
 
 // Tentukan apakah periode voting sudah berakhir (true = ditutup, false = dibuka)
 export const IS_VOTING_CLOSED = false;
+export const getVotePrice = () => Number(process.env.PRICE_PER_VOTE) || 2000;
 
 let leaderboardCache: any = null;
 let leaderboardCacheTime = 0;
@@ -160,7 +161,7 @@ export const submitVotes = async (req: Request, res: Response) => {
             code: txCode,
             team_id: teamId,
             votes_count: qty,
-            amount: qty * 3000,
+            amount: qty * getVotePrice(),
             voter_email: "guest@forbasi.com",
             status: "Lunas"
           }
@@ -239,7 +240,7 @@ export const requestPayment = async (req: Request, res: Response) => {
         return res.status(400).json({ message: `Tim dengan ID ${teamId} tidak ditemukan` });
       }
 
-      totalAmount += (qty * 3000);
+      totalAmount += (qty * getVotePrice());
     }
 
     const kodeUnik = 0;
@@ -248,7 +249,7 @@ export const requestPayment = async (req: Request, res: Response) => {
     for (const item of cart) {
       const teamId = Number(item.id);
       const qty = Number(item.qty);
-      const amount = qty * 3000;
+      const amount = qty * getVotePrice();
 
       await prisma.transactions.create({
         data: {
@@ -517,11 +518,11 @@ export const submitOfflineVotes = async (req: Request, res: Response) => {
           code: transactionCode,
           team_id: teamIdNum,
           votes_count: votesCountNum,
-          amount: votesCountNum * 3000,
+          amount: votesCountNum * getVotePrice(),
           voter_email: email,
           status: "Lunas",
           kode_unik: 0,
-          grand_total: votesCountNum * 3000
+          grand_total: votesCountNum * getVotePrice()
         }
       });
 

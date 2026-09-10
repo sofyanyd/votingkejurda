@@ -3,7 +3,7 @@ import prisma from "../lib/prisma.js";
 import { requestDokuDynamicQris, verifyDokuWebhookSignature } from "../lib/doku.js";
 import { clearLeaderboardCache, IS_VOTING_CLOSED } from "./voteController.js";
 
-const DEFAULT_PRICE_PER_VOTE = Number(process.env.PRICE_PER_VOTE) || 3000;
+const DEFAULT_PRICE_PER_VOTE = Number(process.env.PRICE_PER_VOTE) || 2000;
 
 /**
  * POST /api/payment/doku/create

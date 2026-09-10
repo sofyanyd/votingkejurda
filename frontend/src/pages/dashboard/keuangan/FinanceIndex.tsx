@@ -228,7 +228,7 @@ export default function FinanceIndex() {
       .filter((tx) => tx.status === "Lunas" && tx.namaKlub.toLowerCase() === pleton.nama.toLowerCase())
       .reduce((sum, tx) => sum + tx.votesCount, 0);
     const { sekolah } = parseBidang(pleton.bidang);
-    return { name: pleton.nama, school: sekolah, votes: clubVotes, amount: clubVotes * 3000, status: "Aktif" };
+    return { name: pleton.nama, school: sekolah, votes: clubVotes, amount: clubVotes * 2000, status: "Aktif" };
   });
 
   const sortedReport = [...memberReport].sort((a, b) => b.votes - a.votes);
@@ -495,7 +495,7 @@ export default function FinanceIndex() {
             <div className="p-5 space-y-4">
               <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
                 <h4 className="text-xs font-bold text-indigo-800 mb-1">Tarif Voting</h4>
-                <p className="text-sm text-indigo-600/80 font-medium">Rp 3.000,- per 1 vote dukungan.</p>
+                <p className="text-sm text-indigo-600/80 font-medium">Rp 2.000,- per 1 vote dukungan.</p>
               </div>
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                 <h4 className="text-xs font-bold text-slate-700 mb-1">Verifikasi</h4>
@@ -658,7 +658,7 @@ export default function FinanceIndex() {
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">Jumlah Vote <span className="text-rose-500">*</span></label>
               <input type="number" required min={1} value={offlineVotesQty} onChange={(e) => setOfflineVotesQty(Math.max(1, parseInt(e.target.value) || 1))} className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
-              <div className="mt-1.5 text-xs text-slate-500">Nilai Konversi: <span className="font-bold text-emerald-600">{formatCurrency(offlineVotesQty * 3000)}</span></div>
+              <div className="mt-1.5 text-xs text-slate-500">Nilai Konversi: <span className="font-bold text-emerald-600">{formatCurrency(offlineVotesQty * 2000)}</span></div>
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">Email Pembeli (Opsional)</label>
