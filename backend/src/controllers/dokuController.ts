@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
-import { requestDokuDynamicQris, requestDokuVirtualAccount, requestDokuCheckout, requestDokuEwallet, verifyDokuWebhookSignature } from "../lib/doku.js";
+import { requestDokuDynamicQris, requestDokuVirtualAccount, requestDokuCheckout, verifyDokuWebhookSignature } from "../lib/doku.js";
 import { clearLeaderboardCache, IS_VOTING_CLOSED } from "./voteController.js";
 
 const DEFAULT_PRICE_PER_VOTE = Number(process.env.PRICE_PER_VOTE) || 2000;
 
 /**
  * POST /api/payment/doku/create
- * Creates transaction in DB and requests Dynamic QRIS, Virtual Account, or e-Wallet Payment Page from DOKU
+ * Creates transaction in DB and requests Dynamic QRIS or Virtual Account from DOKU
  */
 export const createDokuPayment = async (req: Request, res: Response) => {
   try {
@@ -17,6 +17,7 @@ export const createDokuPayment = async (req: Request, res: Response) => {
 
     const { teamId, quantity, cart, voterEmail, paymentMethod, bankCode } = req.body;
     const email = voterEmail && typeof voterEmail === "string" ? voterEmail.trim() : "guest@forbasi.com";
+    const selectedMethod = (paymentMethod || "VA").toUpperCase(); // Default to VA for instant active payment
 
     // Support both single team selection and cart array
     let itemsToProcess: { teamId: number; quantity: number }[] = [];
@@ -59,13 +60,6 @@ export const createDokuPayment = async (req: Request, res: Response) => {
     const pricePerVote = DEFAULT_PRICE_PER_VOTE;
     const totalAmount = totalVotesCount * pricePerVote;
 
-    // Auto-select payment method: If under Rp 10.000 (e.g. 1-4 votes @ Rp 2.000), 
-    // default to EWALLET payment page URL (DOKU Checkout for Rp 2.000).
-    let selectedMethod = paymentMethod ? String(paymentMethod).toUpperCase() : "";
-    if (!selectedMethod) {
-      selectedMethod = totalAmount < 10000 ? "EWALLET" : "VA";
-    }
-
     // Generate unique invoice number: e.g. KJDA-2026-84920412
     const invoiceId = `KJDA-2026-${Math.floor(10000000 + Math.random() * 90000000)}`;
 
@@ -86,40 +80,7 @@ export const createDokuPayment = async (req: Request, res: Response) => {
 
     let dokuResult: any = null;
 
-    if (selectedMethod === "EWALLET" || (selectedMethod === "VA" && totalAmount < 10000)) {
-      try {
-        const ewalletRes = await requestDokuEwallet({
-          invoiceId,
-          amount: totalAmount
-        });
-
-        dokuResult = {
-          paymentMethod: "EWALLET",
-          paymentUrl: ewalletRes.paymentUrl,
-          dokuReference: ewalletRes.dokuReference,
-          expiresAt: ewalletRes.expiresAt,
-          qrContent: ewalletRes.paymentUrl
-        };
-      } catch (eErr: any) {
-        console.warn("[DOKU] E-Wallet payment URL failed, falling back to direct VA:", eErr?.message);
-        const vaRes = await requestDokuVirtualAccount({
-          invoiceId,
-          amount: totalAmount,
-          bankCode: bankCode || "PERMATA",
-          customerEmail: email
-        });
-
-        dokuResult = {
-          paymentMethod: "VA",
-          vaNumber: vaRes.vaNumber,
-          bankName: vaRes.bankName,
-          howToPayPage: vaRes.howToPayPage || undefined,
-          dokuReference: vaRes.dokuReference,
-          expiresAt: vaRes.expiresAt,
-          qrContent: `VA:${vaRes.bankName}:${vaRes.vaNumber}`
-        };
-      }
-    } else if (selectedMethod === "VA") {
+    if (selectedMethod === "VA") {
       const requestedBank = (bankCode || "PERMATA").toUpperCase();
       const vaRes = await requestDokuVirtualAccount({
         invoiceId,
@@ -170,14 +131,12 @@ export const createDokuPayment = async (req: Request, res: Response) => {
       pricePerVote: pricePerVote,
       status: "PENDING",
       paymentMethod: dokuResult.paymentMethod,
-      paymentUrl: dokuResult.paymentUrl || undefined,
       vaNumber: dokuResult.vaNumber || undefined,
       bankName: dokuResult.bankName || undefined,
       howToPayPage: dokuResult.howToPayPage || undefined,
       qrContent: dokuResult.qrContent,
       expiresAt: dokuResult.expiresAt.toISOString()
     });
-
 
   } catch (error: any) {
     console.error("Gagal membuat pembayaran DOKU:", error);
