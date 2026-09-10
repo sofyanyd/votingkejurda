@@ -57,7 +57,7 @@ export default function CatalogVote() {
   const getCategoryShortName = (categoryId: number) =>
     categories.find((c) => c.id === categoryId)?.shortName || "";
 
-  const handleSubmitVotes = () => {
+  const handleSubmitVotes = async () => {
     if (IS_VOTING_CLOSED) {
       alert("Voting telah ditutup. Pembelian suara baru tidak diizinkan.");
       return;
@@ -67,13 +67,26 @@ export default function CatalogVote() {
       return;
     }
 
-    const transactionCode = `PAY-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const kodeUnik = 0;
-    const grandTotal = totalPrice;
+    setSubmitting(true);
+    try {
+      const createDokuPayment = useTransactionStore.getState().createDokuPayment;
+      const resData = await createDokuPayment({ cart });
 
-    navigate("/checkout", { 
-      state: { cart, totalPrice, transactionCode, kodeUnik, grandTotal } 
-    });
+      if (!resData || !resData.invoiceId) {
+        alert("Gagal membuat transaksi pembayaran DOKU QRIS. Silakan coba lagi.");
+        setSubmitting(false);
+        return;
+      }
+
+      navigate("/checkout", { 
+        state: { invoiceData: resData, cart, totalPrice } 
+      });
+    } catch (error) {
+      console.error(error);
+      alert("Terjadi kesalahan saat membuat transaksi pembayaran.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleUpdateQty = (participant: Participant, delta: number) => {

@@ -7,6 +7,7 @@ import eventRoute from "./routes/eventRoute.js";
 import authRoute from "./routes/authRoute.js";
 import voteRoute from "./routes/voteRoute.js";
 import qrRoute from "./routes/qrRoute.js";
+import paymentRoute from "./routes/paymentRoute.js";
 
 const app = express();
 
@@ -45,6 +46,8 @@ app.use("/events", eventRoute);
 app.use("/auth", authRoute);
 app.use("/votes", voteRoute);
 app.use("/qrcodes", qrRoute);
+app.use("/api/payment", paymentRoute);
+app.use("/payment", paymentRoute);
 
 // Global error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

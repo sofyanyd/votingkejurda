@@ -22,6 +22,8 @@ interface TransactionState {
   approveTransaction: (transactionCode: string) => Promise<boolean>;
   deleteTransaction: (transactionCode: string) => Promise<boolean>;
   addOfflineVote: (finalistId: number, namaKlub: string, votesCount: number, voterEmail?: string) => Promise<boolean>;
+  createDokuPayment: (params: { teamId?: number; quantity?: number; cart?: any[]; voterEmail?: string }) => Promise<{ invoiceId: string; amount: number; status: string; qrContent: string; expiresAt: string } | null>;
+  checkDokuPaymentStatus: (invoiceId: string) => Promise<{ invoiceId: string; status: string } | null>;
 }
 
 export const useTransactionStore = create<TransactionState>((set, get) => ({
@@ -99,6 +101,26 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     } catch (error) {
       console.error("Gagal submit vote offline:", error);
       return false;
+    }
+  },
+
+  createDokuPayment: async (params) => {
+    try {
+      const res = await axios.post(`${API_BASE_URL}/payment/doku/create`, params);
+      return res.data;
+    } catch (error) {
+      console.error("Gagal membuat DOKU payment:", error);
+      return null;
+    }
+  },
+
+  checkDokuPaymentStatus: async (invoiceId: string) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/payment/status/${invoiceId}`);
+      return res.data;
+    } catch (error) {
+      console.error("Gagal mengecek status DOKU payment:", error);
+      return null;
     }
   }
 }));
