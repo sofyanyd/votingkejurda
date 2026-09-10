@@ -134,7 +134,9 @@ export default function Checkout() {
                   Pembayaran <span className="text-emerald-600">VA {bankName}</span>
                 </h1>
                 <p className="text-slate-500 text-xs sm:text-sm font-medium">
-                  Transfer dari GoPay.
+                  {amount < 15000 
+                    ? "Transfer via GoPay (Wajib GoPay untuk nominal di bawah Rp 15.000)." 
+                    : "Transfer via GoPay, e-Wallet, atau Bank Lain."}
                 </p>
               </div>
               
@@ -190,13 +192,23 @@ export default function Checkout() {
 
                     <div className="bg-emerald-50/80 border border-emerald-100 text-emerald-900 p-4 rounded-2xl text-xs font-medium leading-relaxed w-full space-y-1.5">
                       <p className="font-bold text-emerald-950">💡 Cara Transfer:</p>
-                      <ol className="list-decimal list-inside space-y-1 text-[11px] text-emerald-800">
-                        <li>Buka aplikasi <strong className="font-bold">GoPay</strong> Anda.</li>
-                        <li>Pilih menu <strong className="font-bold">Transfer VA</strong>.</li>
-                        <li>Pilih Bank Tujuan: <strong className="font-bold">BANK {bankName}</strong>.</li>
-                        <li>Masukkan Nomor VA: <strong className="font-bold">{vaNumber}</strong>.</li>
-                        <li>Nama penerima akan otomatis terverifikasi dan pembayaran sukses!</li>
-                      </ol>
+                      {amount < 15000 ? (
+                        <ol className="list-decimal list-inside space-y-1 text-[11px] text-emerald-800">
+                          <li>Buka aplikasi <strong className="font-bold">GoPay</strong> Anda <span className="text-emerald-700 italic font-semibold">(Wajib GoPay untuk nominal &lt; Rp 15.000)</span>.</li>
+                          <li>Pilih menu <strong className="font-bold">Transfer / Bayar</strong> &gt; <strong className="font-bold">Transfer ke Bank</strong>.</li>
+                          <li>Pilih Bank Tujuan: <strong className="font-bold">BANK {bankName}</strong>.</li>
+                          <li>Masukkan Nomor VA: <strong className="font-bold">{vaNumber}</strong>.</li>
+                          <li>Nama penerima <strong className="font-bold">KEJURDA</strong> akan otomatis muncul dan selesaikan pembayaran.</li>
+                        </ol>
+                      ) : (
+                        <ol className="list-decimal list-inside space-y-1 text-[11px] text-emerald-800">
+                          <li>Buka aplikasi <strong className="font-bold">GoPay, e-Wallet (DANA, OVO, ShopeePay)</strong>, atau <strong className="font-bold">m-Banking (BCA, Mandiri, BRI, BNI, Permata, dll)</strong>.</li>
+                          <li>Pilih menu <strong className="font-bold">Transfer Bank / Virtual Account</strong>.</li>
+                          <li>Pilih Bank Tujuan: <strong className="font-bold">BANK {bankName}</strong>.</li>
+                          <li>Masukkan Nomor VA: <strong className="font-bold">{vaNumber}</strong>.</li>
+                          <li>Nama penerima <strong className="font-bold">KEJURDA</strong> akan otomatis muncul dan selesaikan pembayaran.</li>
+                        </ol>
+                      )}
                     </div>
                   </div>
                 ) : (
