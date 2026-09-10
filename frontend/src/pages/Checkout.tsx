@@ -170,9 +170,42 @@ export default function Checkout() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               
-              {/* KIRI: VA CONTAINER */}
+              {/* KIRI: PAYMENT CONTAINER */}
               <Card className="p-6 border-slate-200 flex flex-col items-center shadow-md">
-                {paymentMethod === "VA" || vaNumber ? (
+                {paymentUrl ? (
+                  <div className="w-full flex flex-col items-center">
+                    <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                      <span className="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
+                        <Building2 size={16} className="text-emerald-600" /> DOKU Official Checkout
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400 font-bold">DOKU OFFICIAL</span>
+                    </div>
+
+                    <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-6 w-full text-center mb-4 flex flex-col items-center gap-4">
+                      <div className="space-y-1">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Total Tagihan Pembayaran</span>
+                        <div className="text-3xl font-black text-emerald-700">{formatCurrency(amount)}</div>
+                        <p className="text-xs font-medium text-slate-600 mt-1">
+                          Klik tombol di bawah untuk membayar via <strong className="font-bold text-emerald-950">ShopeePay, OVO, DOKU Wallet, LinkAja, Alfamart/Indomaret</strong> tanpa batasan minimal!
+                        </p>
+                      </div>
+
+                      <a
+                        href={paymentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-4 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm rounded-2xl transition-all shadow-lg shadow-emerald-500/20 text-center flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02]"
+                      >
+                        <Building2 size={18} /> Bayar {formatCurrency(amount)} via DOKU Official &rarr;
+                      </a>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-slate-500 text-xs font-bold bg-slate-100 px-4 py-2 rounded-xl mb-4 w-full justify-center">
+                      <Clock size={14} className="text-emerald-600 animate-spin" />
+                      <span>Sistem otomatis mendeteksi pembayaran saat Anda menyelesaikan transaksi</span>
+                    </div>
+                  </div>
+                ) : paymentMethod === "VA" || vaNumber ? (
                   <div className="w-full flex flex-col items-center">
                     <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                       <span className="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
