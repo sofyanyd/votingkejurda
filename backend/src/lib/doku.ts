@@ -203,6 +203,7 @@ export const requestDokuDynamicQris = async (params: {
 
 /**
  * Request Virtual Account from DOKU API (BRI, BNI, Permata, BSI, CIMB, etc.)
+ * Uses bank-specific V2 API endpoints
  */
 export const requestDokuVirtualAccount = async (params: {
   invoiceId: string;
@@ -216,14 +217,27 @@ export const requestDokuVirtualAccount = async (params: {
   const timestamp = new Date().toISOString();
   const bank = (params.bankCode || "BRI").toUpperCase();
 
-  const targetPath = "/doku-virtual-account/v2/payment-code";
+  // Map bank code to DOKU V2 API endpoint path (bank-specific)
+  const bankEndpointMap: { [key: string]: string } = {
+    BRI: "/bri-virtual-account/v2/payment-code",
+    BNI: "/bni-virtual-account/v2/payment-code",
+    PERMATA: "/permata-virtual-account/v2/payment-code",
+    BSI: "/bsi-virtual-account/v2/payment-code",
+    CIMB: "/cimb-virtual-account/v2/payment-code",
+    MANDIRI: "/mandiri-virtual-account/v2/payment-code",
+    DOKU: "/doku-virtual-account/v2/payment-code"
+  };
+
+  const targetPath = bankEndpointMap[bank] || bankEndpointMap["DOKU"];
+  console.log(`[DOKU VA] Using endpoint: ${config.baseUrl}${targetPath} for bank: ${bank}`);
+
   const requestBody = {
     order: {
       invoice_number: params.invoiceId,
       amount: params.amount
     },
     virtual_account_info: {
-      billing_type: "FIXED",
+      billing_type: "FIX_BILL",
       expired_time: 60,
       reusable_status: false
     },
@@ -235,64 +249,66 @@ export const requestDokuVirtualAccount = async (params: {
 
   const bodyString = JSON.stringify(requestBody);
 
-  if (config.clientId && config.secretKey && !config.clientId.includes("YOUR_DOKU")) {
-    try {
-      const signature = generateDokuSignatureV2(
-        config.clientId,
-        config.secretKey,
-        requestId,
-        timestamp,
-        targetPath,
-        bodyString
-      );
-
-      const response = await fetch(`${config.baseUrl}${targetPath}`, {
-        method: "POST",
-        headers: {
-          "Client-Id": config.clientId,
-          "Request-Id": requestId,
-          "Request-Timestamp": timestamp,
-          "Signature": signature,
-          "Content-Type": "application/json"
-        },
-        body: bodyString
-      });
-
-      if (response.ok) {
-        const data: any = await response.json();
-        if (data && data.virtual_account_info?.virtual_account_number) {
-          return {
-            vaNumber: data.virtual_account_info.virtual_account_number,
-            bankName: bank,
-            dokuReference: data.response?.invoice_number || params.invoiceId,
-            expiresAt: new Date(Date.now() + 60 * 60 * 1000)
-          };
-        }
-      } else {
-        console.error("[DOKU VA API ERROR] Status:", response.status, await response.text());
-      }
-    } catch (error: any) {
-      console.error("[DOKU VA API ERROR]:", error?.message || error);
-    }
+  if (!config.clientId || !config.secretKey || config.clientId.includes("YOUR_DOKU")) {
+    throw new Error("DOKU credentials belum dikonfigurasi. Set DOKU_CLIENT_ID dan DOKU_SECRET_KEY di environment variables.");
   }
 
-  // Fallback test VA number for sandbox/dev testing
-  const prefixMap: { [key: string]: string } = {
-    BRI: "8888",
-    BNI: "8808",
-    PERMATA: "8988",
-    BSI: "8809",
-    CIMB: "5988",
-    DOKU: "8888"
-  };
-  const prefix = prefixMap[bank] || "8888";
-  const numDigits = params.invoiceId.replace(/\D/g, "").slice(-10).padStart(10, "0");
-  const mockVaNumber = `${prefix}${numDigits}`;
+  const signature = generateDokuSignatureV2(
+    config.clientId,
+    config.secretKey,
+    requestId,
+    timestamp,
+    targetPath,
+    bodyString
+  );
+
+  console.log(`[DOKU VA] Request-Id: ${requestId}`);
+  console.log(`[DOKU VA] Request body: ${bodyString}`);
+
+  const response = await fetch(`${config.baseUrl}${targetPath}`, {
+    method: "POST",
+    headers: {
+      "Client-Id": config.clientId,
+      "Request-Id": requestId,
+      "Request-Timestamp": timestamp,
+      "Signature": signature,
+      "Content-Type": "application/json"
+    },
+    body: bodyString
+  });
+
+  const responseText = await response.text();
+  console.log(`[DOKU VA] Response status: ${response.status}`);
+  console.log(`[DOKU VA] Response body: ${responseText}`);
+
+  if (!response.ok) {
+    throw new Error(`DOKU VA API error (${response.status}): ${responseText}`);
+  }
+
+  let data: any;
+  try {
+    data = JSON.parse(responseText);
+  } catch (e) {
+    throw new Error(`DOKU VA API returned invalid JSON: ${responseText}`);
+  }
+
+  // Try multiple possible response formats from DOKU
+  const vaNumber = 
+    data.virtual_account_info?.virtual_account_number ||
+    data.virtual_account_number ||
+    data.payment_code ||
+    data.virtual_account_info?.payment_code ||
+    data.va_number;
+
+  if (!vaNumber) {
+    console.error("[DOKU VA] Full response data:", JSON.stringify(data, null, 2));
+    throw new Error(`DOKU VA API tidak mengembalikan nomor VA. Response: ${JSON.stringify(data)}`);
+  }
 
   return {
-    vaNumber: mockVaNumber,
+    vaNumber: vaNumber,
     bankName: bank,
-    dokuReference: `DOKU-VA-REF-${params.invoiceId}`,
+    dokuReference: data.order?.invoice_number || data.response?.invoice_number || params.invoiceId,
     expiresAt: new Date(Date.now() + 60 * 60 * 1000)
   };
 };
