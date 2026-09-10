@@ -60,12 +60,6 @@ export const createDokuPayment = async (req: Request, res: Response) => {
     const pricePerVote = DEFAULT_PRICE_PER_VOTE;
     const totalAmount = totalVotesCount * pricePerVote;
 
-    if (selectedMethod === "VA" && totalAmount < 10000) {
-      return res.status(400).json({ 
-        message: "Minimal pembelian untuk Virtual Account adalah 5 vote (Rp 10.000) sesuai regulasi perbankan." 
-      });
-    }
-
     // Generate unique invoice number: e.g. KJDA-2026-84920412
     const invoiceId = `KJDA-2026-${Math.floor(10000000 + Math.random() * 90000000)}`;
 
@@ -92,6 +86,7 @@ export const createDokuPayment = async (req: Request, res: Response) => {
         invoiceId,
         amount: totalAmount,
         bankCode: requestedBank,
+        customerName: "KEJURDA FORBASI",
         customerEmail: email
       });
 
