@@ -69,17 +69,33 @@ export default function CatalogVote() {
 
     setSubmitting(true);
     try {
+      const addTransaction = useTransactionStore.getState().addTransaction;
       const createDokuPayment = useTransactionStore.getState().createDokuPayment;
-      const resData = await createDokuPayment({ cart });
 
-      if (!resData || !resData.invoiceId) {
-        alert("Gagal membuat transaksi pembayaran DOKU QRIS. Silakan coba lagi.");
+      // 1. Create Direct Transfer transaction with Kode Unik (guaranteed to work for any nominal e.g. Rp 2.000)
+      const directTx = await addTransaction(cart);
+
+      // 2. Try DOKU Payment (for VA / Checkout options)
+      let dokuRes = null;
+      try {
+        dokuRes = await createDokuPayment({ cart });
+      } catch (err) {
+        console.warn("DOKU payment optional creation notice:", err);
+      }
+
+      if (!directTx && (!dokuRes || !dokuRes.invoiceId)) {
+        alert("Gagal membuat transaksi pembayaran. Silakan coba lagi.");
         setSubmitting(false);
         return;
       }
 
       navigate("/checkout", { 
-        state: { invoiceData: resData, cart, totalPrice } 
+        state: { 
+          directTxData: directTx,
+          invoiceData: dokuRes, 
+          cart, 
+          totalPrice 
+        } 
       });
     } catch (error) {
       console.error(error);

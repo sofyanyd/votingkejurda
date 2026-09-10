@@ -243,8 +243,9 @@ export const requestPayment = async (req: Request, res: Response) => {
       totalAmount += (qty * getVotePrice());
     }
 
-    const kodeUnik = 0;
-    const grandTotal = totalAmount;
+    // Generate random 3-digit kodeUnik (100 - 999) for easy transfer tracking
+    const kodeUnik = Math.floor(100 + Math.random() * 900);
+    const grandTotal = totalAmount + kodeUnik;
 
     for (const item of cart) {
       const teamId = Number(item.id);
@@ -254,6 +255,7 @@ export const requestPayment = async (req: Request, res: Response) => {
       await prisma.transactions.create({
         data: {
           code: `TX-${teamId}-${paymentCode}`,
+          invoice_id: paymentCode,
           team_id: teamId,
           votes_count: qty,
           amount: amount, 
