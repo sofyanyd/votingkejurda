@@ -211,7 +211,7 @@ export const requestDokuVirtualAccount = async (params: {
   bankCode?: string;
   customerName?: string;
   customerEmail?: string;
-}): Promise<{ vaNumber: string; bankName: string; dokuReference: string; expiresAt: Date }> => {
+}): Promise<{ vaNumber: string; bankName: string; howToPayPage?: string; dokuReference: string; expiresAt: Date }> => {
   const config = getDokuConfig();
   const requestId = `REQ-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
   const timestamp = new Date().toISOString();

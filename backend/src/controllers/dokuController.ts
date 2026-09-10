@@ -78,6 +78,8 @@ export const createDokuPayment = async (req: Request, res: Response) => {
       }
     });
 
+    let dokuResult: any = null;
+
     if (selectedMethod === "VA") {
       const requestedBank = (bankCode || "PERMATA").toUpperCase();
       const vaRes = await requestDokuVirtualAccount({
