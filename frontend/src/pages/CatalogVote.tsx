@@ -66,6 +66,10 @@ export default function CatalogVote() {
       alert("Keranjang vote masih kosong.");
       return;
     }
+    if (totalPrice < 10000) {
+      alert("Minimal pembelian adalah 5 Vote (Rp 10.000) sesuai ketentuan batas minimum pembayaran Virtual Account perbankan.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -73,7 +77,7 @@ export default function CatalogVote() {
       const resData = await createDokuPayment({ cart });
 
       if (!resData || !resData.invoiceId) {
-        alert("Gagal membuat transaksi pembayaran DOKU QRIS. Silakan coba lagi.");
+        alert("Gagal membuat transaksi pembayaran. Silakan coba lagi.");
         setSubmitting(false);
         return;
       }
@@ -81,9 +85,9 @@ export default function CatalogVote() {
       navigate("/checkout", { 
         state: { invoiceData: resData, cart, totalPrice } 
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("Terjadi kesalahan saat membuat transaksi pembayaran.");
+      alert(error.message || "Terjadi kesalahan saat membuat transaksi pembayaran.");
     } finally {
       setSubmitting(false);
     }
@@ -273,19 +277,25 @@ export default function CatalogVote() {
             </div>
 
             <div className="p-5 border-t border-slate-100 bg-slate-50/80 z-20">
-              <div className="flex justify-between items-end mb-5">
+              <div className="flex justify-between items-end mb-3">
                 <span className="font-bold text-slate-500 text-sm">Total Tagihan</span>
                 <span className="font-black text-emerald-600 text-xl leading-none">
                   Rp {totalPrice.toLocaleString("id-ID")}
                 </span>
               </div>
 
+              {totalItems < 5 && (
+                <div className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200/80 rounded-xl p-2.5 mb-3 text-center leading-tight">
+                  💡 Minimal <span className="font-extrabold text-amber-900">5 Vote (Rp 10.000)</span> untuk pembayaran Virtual Account
+                </div>
+              )}
+
               <button 
                 disabled={submitting}
                 onClick={handleSubmitVotes}
                 className="w-full py-4 rounded-2xl font-black text-sm transition-all flex justify-center items-center gap-2 cursor-pointer bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 hover:scale-[1.02]"
               >
-                {submitting ? "Memproses..." : "Bayar Sekarang"}
+                {submitting ? "Memproses..." : totalItems < 5 ? `Tambah ${5 - totalItems} Vote Lagi` : "Bayar Sekarang"}
               </button>
             </div>
           </div>
@@ -319,6 +329,12 @@ export default function CatalogVote() {
             </div>
           )}
 
+          {totalItems < 5 && (
+            <div className="bg-amber-500 text-amber-950 font-black text-[10px] py-1 px-4 text-center">
+              💡 Minimal pembelian 5 Vote (Rp 10.000) untuk VA Bank
+            </div>
+          )}
+
           <div className="p-4 px-6 flex items-center justify-between gap-4">
             <div 
               className="flex-1 flex flex-col justify-center cursor-pointer group"
@@ -339,7 +355,7 @@ export default function CatalogVote() {
               onClick={handleSubmitVotes}
               className="bg-emerald-600 text-white font-black text-sm px-6 py-3.5 rounded-2xl hover:bg-emerald-500 active:scale-95 transition-all shadow-lg shadow-emerald-500/20 whitespace-nowrap cursor-pointer"
             >
-              {submitting ? "Proses..." : "Bayar"}
+              {submitting ? "Proses..." : totalItems < 5 ? `Min. 5 Vote` : "Bayar"}
             </button>
           </div>
         </div>

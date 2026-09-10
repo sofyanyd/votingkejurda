@@ -128,9 +128,10 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     try {
       const res = await axios.post(`${API_BASE_URL}/payment/doku/create`, params);
       return res.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Gagal membuat DOKU payment:", error);
-      return null;
+      const errorMsg = error.response?.data?.message || "Gagal membuat transaksi pembayaran DOKU. Silakan coba lagi.";
+      throw new Error(errorMsg);
     }
   },
 
