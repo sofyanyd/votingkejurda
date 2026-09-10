@@ -214,15 +214,15 @@ export default function Checkout() {
                   <div className="w-full flex flex-col items-center">
                     <div className="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                       <span className="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
-                        <Building2 size={16} className="text-emerald-600" /> Virtual Account {bankName}
+                        <Building2 size={16} className="text-emerald-600" /> Virtual Account Permata (DOKU FORBASI)
                       </span>
                       <span className="text-[10px] font-mono text-slate-400 font-bold">DOKU SNAP</span>
                     </div>
 
                     <div className="bg-slate-50 border-2 border-emerald-100 rounded-2xl p-4 w-full text-center mb-4 relative">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Nomor Virtual Account</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Nomor Virtual Account (Semua Bank & E-Wallet)</span>
                       <div className="text-2xl sm:text-3xl font-mono font-black text-emerald-700 tracking-wider">
-                        {vaNumber || "88880123456789"}
+                        {vaNumber || "8965999912345678"}
                       </div>
                       
                       <button
@@ -230,22 +230,35 @@ export default function Checkout() {
                         className="mt-3 inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-sm cursor-pointer"
                       >
                         {copied ? <Check size={14} /> : <Copy size={14} />}
-                        {copied ? "Berhasil Disalin!" : "Salin Nomor VA"}
+                        {copied ? "Berhasil Disalin!" : "Salin Nomor VA Permata"}
                       </button>
                     </div>
+
+                    {paymentUrl && (
+                      <a
+                        href={paymentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full mb-4 py-3 px-4 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold text-xs rounded-xl transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Building2 size={14} /> Buka Halaman DOKU Checkout (Pilihan BRI/BNI/Mandiri) &rarr;
+                      </a>
+                    )}
 
                     <div className="flex items-center gap-2 text-slate-500 text-xs font-bold bg-slate-100 px-4 py-2 rounded-xl mb-4 w-full justify-center">
                       <Clock size={14} className="text-emerald-600 animate-spin" />
                       <span>Sistem otomatis mendeteksi pembayaran</span>
                     </div>
 
-                    <div className="bg-emerald-50/80 border border-emerald-100 text-emerald-900 p-4 rounded-2xl text-xs font-medium leading-relaxed w-full space-y-1">
-                      <p className="font-bold text-emerald-950">💡 Petunjuk Transfer m-Banking:</p>
+                    <div className="bg-emerald-50/80 border border-emerald-100 text-emerald-900 p-4 rounded-2xl text-xs font-medium leading-relaxed w-full space-y-1.5">
+                      <p className="font-bold text-emerald-950">💡 Cara Transfer via GoPay / Dana / OVO / BCA / Mandiri / Semua Bank:</p>
                       <ol className="list-decimal list-inside space-y-1 text-[11px] text-emerald-800">
-                        <li>Buka aplikasi m-Banking Anda (BCA, Mandiri, BRI, BNI, SeaBank, Dana, GoPay, dll).</li>
-                        <li>Pilih menu <strong className="font-bold">Transfer &rarr; Virtual Account</strong> (atau Transfer ke Bank {bankName}).</li>
-                        <li>Masukkan nomor Virtual Account di atas dan sertakan nominal tepat <strong className="font-bold">{formatCurrency(amount)}</strong>.</li>
-                        <li>Konfirmasi transaksi. Status pembayaran akan otomatis diperbarui menjadi <strong className="font-bold">PAID</strong>.</li>
+                        <li>Buka aplikasi <strong className="font-bold">GoPay / E-Wallet / m-Banking</strong> Anda.</li>
+                        <li>Pilih menu <strong className="font-bold">Transfer / Kirim Ke Rekening Bank</strong>.</li>
+                        <li>Pilih Bank Tujuan: <strong className="font-bold">BANK PERMATA</strong>.</li>
+                        <li>Masukkan Nomor Rekening: <strong className="font-bold">{vaNumber}</strong>.</li>
+                        <li>Nama penerima akan otomatis muncul: <strong className="font-bold">FORBASI / DOKU</strong>.</li>
+                        <li>Konfirmasi bayar tepat <strong className="font-bold">{formatCurrency(amount)}</strong>.</li>
                       </ol>
                     </div>
                   </div>

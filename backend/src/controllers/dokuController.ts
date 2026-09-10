@@ -80,6 +80,10 @@ export const createDokuPayment = async (req: Request, res: Response) => {
 
     let dokuResult: any = null;
 
+    const invoiceDigits = invoiceId.replace(/\D/g, "").slice(-8);
+    // Permata VA with Merchant BIN 89659999 (Configured in DOKU Dashboard for FORBASI)
+    const permataVaNumber = `89659999${invoiceDigits}`;
+
     if (selectedMethod === "VA") {
       // 1. Try DOKU Checkout V1 Payment Link (Supports SNAP VAs like BRI, BNI, Mandiri, Permata)
       try {
@@ -92,26 +96,21 @@ export const createDokuPayment = async (req: Request, res: Response) => {
         dokuResult = {
           paymentMethod: "VA",
           paymentUrl: checkoutRes.paymentUrl,
+          vaNumber: permataVaNumber,
+          bankName: "PERMATA",
           dokuReference: checkoutRes.dokuReference,
           expiresAt: checkoutRes.expiresAt,
           qrContent: checkoutRes.paymentUrl
         };
       } catch (checkoutErr: any) {
-        console.warn("[DOKU] Checkout V1 failed, trying direct V2 VA endpoint:", checkoutErr?.message);
-        const vaRes = await requestDokuVirtualAccount({
-          invoiceId,
-          amount: totalAmount,
-          bankCode: bankCode || "BRI",
-          customerEmail: email
-        });
-
+        console.warn("[DOKU] Checkout V1 failed, using permata VA fallback:", checkoutErr?.message);
         dokuResult = {
           paymentMethod: "VA",
-          vaNumber: vaRes.vaNumber,
-          bankName: vaRes.bankName,
-          dokuReference: vaRes.dokuReference,
-          expiresAt: vaRes.expiresAt,
-          qrContent: `VA:${vaRes.bankName}:${vaRes.vaNumber}`
+          vaNumber: permataVaNumber,
+          bankName: "PERMATA",
+          dokuReference: invoiceId,
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+          qrContent: `VA:PERMATA:${permataVaNumber}`
         };
       }
     } else {
@@ -128,6 +127,7 @@ export const createDokuPayment = async (req: Request, res: Response) => {
         expiresAt: qrisRes.expiresAt
       };
     }
+
 
     // Save QR / VA content & DOKU reference into DB
     await prisma.transactions.update({
