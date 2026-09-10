@@ -242,7 +242,7 @@ export const requestDokuVirtualAccount = async (params: {
       reusable_status: false
     },
     customer: {
-      name: (params.customerName && params.customerName.trim() !== "") ? params.customerName : "KEJURDA FORBASI",
+      name: (params.customerName && params.customerName.trim() !== "") ? params.customerName : "KEJURDA",
       email: params.customerEmail || "guest@forbasi.com"
     }
   };

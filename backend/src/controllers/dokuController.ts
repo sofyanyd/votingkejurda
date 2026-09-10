@@ -86,7 +86,7 @@ export const createDokuPayment = async (req: Request, res: Response) => {
         invoiceId,
         amount: totalAmount,
         bankCode: requestedBank,
-        customerName: "KEJURDA FORBASI",
+        customerName: "KEJURDA",
         customerEmail: email
       });
 
