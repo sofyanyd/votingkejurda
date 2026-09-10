@@ -24,21 +24,23 @@ export const getLeaderboard = async (req: Request, res: Response) => {
 
     const teams = await prisma.teams.findMany({
       include: {
-        votes: true,
+        _count: {
+          select: { votes: true }
+        },
         categories: true
       }
     });
 
-    const totalVotesOverall = teams.reduce((acc, f) => acc + f.votes.length, 0);
+    const totalVotesOverall = teams.reduce((acc, f) => acc + (f._count?.votes || 0), 0);
 
     // Group votes by category to calculate category totals
     const categoryTotals: { [key: number]: number } = {};
     teams.forEach(f => {
-      categoryTotals[f.category_id] = (categoryTotals[f.category_id] || 0) + f.votes.length;
+      categoryTotals[f.category_id] = (categoryTotals[f.category_id] || 0) + (f._count?.votes || 0);
     });
 
     const standings = teams.map(f => {
-      const votesCount = f.votes.length;
+      const votesCount = f._count?.votes || 0;
       const totalCatVotes = categoryTotals[f.category_id] || 0;
       const percentage = totalCatVotes > 0 ? Math.round((votesCount / totalCatVotes) * 100) : 0;
       return {
@@ -320,35 +322,40 @@ export const completePayment = async (paymentCode: string) => {
       const teamId = transaction.team_id;
       const qty = transaction.votes_count;
 
-      const ticketCodes: string[] = [];
-      for (let i = 0; i < qty; i++) {
-        const ticketCode = `TXV-${cleanCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${i}-${Math.floor(100 + Math.random() * 900)}`;
-        ticketCodes.push(ticketCode);
+      const CHUNK_SIZE = 500;
+      for (let i = 0; i < qty; i += CHUNK_SIZE) {
+        const chunkQty = Math.min(CHUNK_SIZE, qty - i);
+        const ticketCodes: string[] = [];
+        for (let j = 0; j < chunkQty; j++) {
+          const idx = i + j;
+          const ticketCode = `TXV-${cleanCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${idx}-${Math.floor(100 + Math.random() * 900)}`;
+          ticketCodes.push(ticketCode);
+        }
+
+        await tx.tickets.createMany({
+          data: ticketCodes.map(code => ({
+            code,
+            status: "used",
+            user_id: userId,
+            used_at: new Date()
+          }))
+        });
+
+        const createdTickets = await tx.tickets.findMany({
+          where: {
+            code: { in: ticketCodes }
+          },
+          select: { id: true }
+        });
+
+        await tx.votes.createMany({
+          data: createdTickets.map(t => ({
+            user_id: userId,
+            team_id: teamId,
+            ticket_id: t.id
+          }))
+        });
       }
-
-      await tx.tickets.createMany({
-        data: ticketCodes.map(code => ({
-          code,
-          status: "used",
-          user_id: userId,
-          used_at: new Date()
-        }))
-      });
-
-      const createdTickets = await tx.tickets.findMany({
-        where: {
-          code: { in: ticketCodes }
-        },
-        select: { id: true }
-      });
-
-      await tx.votes.createMany({
-        data: createdTickets.map(t => ({
-          user_id: userId,
-          team_id: teamId,
-          ticket_id: t.id
-        }))
-      });
     }
 
     clearLeaderboardCache();
@@ -526,35 +533,40 @@ export const submitOfflineVotes = async (req: Request, res: Response) => {
         }
       });
 
-      const ticketCodes: string[] = [];
-      for (let i = 0; i < votesCountNum; i++) {
-        const ticketCode = `TXV-${paymentCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${i}-${Math.floor(100 + Math.random() * 900)}`;
-        ticketCodes.push(ticketCode);
+      const CHUNK_SIZE = 500;
+      for (let i = 0; i < votesCountNum; i += CHUNK_SIZE) {
+        const chunkQty = Math.min(CHUNK_SIZE, votesCountNum - i);
+        const ticketCodes: string[] = [];
+        for (let j = 0; j < chunkQty; j++) {
+          const idx = i + j;
+          const ticketCode = `TXV-${paymentCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${idx}-${Math.floor(100 + Math.random() * 900)}`;
+          ticketCodes.push(ticketCode);
+        }
+
+        await tx.tickets.createMany({
+          data: ticketCodes.map(code => ({
+            code,
+            status: "used",
+            user_id: userId,
+            used_at: new Date()
+          }))
+        });
+
+        const createdTickets = await tx.tickets.findMany({
+          where: {
+            code: { in: ticketCodes }
+          },
+          select: { id: true }
+        });
+
+        await tx.votes.createMany({
+          data: createdTickets.map(t => ({
+            user_id: userId,
+            team_id: teamIdNum,
+            ticket_id: t.id
+          }))
+        });
       }
-
-      await tx.tickets.createMany({
-        data: ticketCodes.map(code => ({
-          code,
-          status: "used",
-          user_id: userId,
-          used_at: new Date()
-        }))
-      });
-
-      const createdTickets = await tx.tickets.findMany({
-        where: {
-          code: { in: ticketCodes }
-        },
-        select: { id: true }
-      });
-
-      await tx.votes.createMany({
-        data: createdTickets.map(t => ({
-          user_id: userId,
-          team_id: teamIdNum,
-          ticket_id: t.id
-        }))
-      });
     }, {
       maxWait: 15000,
       timeout: 60000

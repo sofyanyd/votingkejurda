@@ -26,16 +26,16 @@ export const createDokuPayment = async (req: Request, res: Response) => {
       for (const c of cart) {
         const tid = Number(c.teamId || c.id);
         const qty = Number(c.quantity || c.qty);
-        if (isNaN(tid) || isNaN(qty) || qty <= 0) {
-          return res.status(400).json({ message: "Data keranjang vote tidak valid" });
+        if (isNaN(tid) || isNaN(qty) || !Number.isInteger(qty) || qty <= 0 || qty > 100000) {
+          return res.status(400).json({ message: "Data keranjang vote tidak valid (jumlah harus bilangan bulat positif max 100.000)" });
         }
         itemsToProcess.push({ teamId: tid, quantity: qty });
       }
     } else if (teamId !== undefined && quantity !== undefined) {
       const tid = Number(teamId);
       const qty = Number(quantity);
-      if (isNaN(tid) || isNaN(qty) || qty <= 0) {
-        return res.status(400).json({ message: "ID Tim dan jumlah vote harus valid" });
+      if (isNaN(tid) || isNaN(qty) || !Number.isInteger(qty) || qty <= 0 || qty > 100000) {
+        return res.status(400).json({ message: "ID Tim dan jumlah vote harus valid (bilangan bulat positif max 100.000)" });
       }
       itemsToProcess.push({ teamId: tid, quantity: qty });
     } else {
@@ -253,35 +253,40 @@ export const dokuWebhook = async (req: Request, res: Response) => {
       const qty = currentTx.votes_count;
       const cleanCode = currentTx.code;
 
-      const ticketCodes: string[] = [];
-      for (let i = 0; i < qty; i++) {
-        const ticketCode = `DOKU-TICK-${cleanCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${i}-${Math.floor(100 + Math.random() * 900)}`;
-        ticketCodes.push(ticketCode);
+      const CHUNK_SIZE = 500;
+      for (let i = 0; i < qty; i += CHUNK_SIZE) {
+        const chunkQty = Math.min(CHUNK_SIZE, qty - i);
+        const ticketCodes: string[] = [];
+        for (let j = 0; j < chunkQty; j++) {
+          const idx = i + j;
+          const ticketCode = `DOKU-TICK-${cleanCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${idx}-${Math.floor(100 + Math.random() * 900)}`;
+          ticketCodes.push(ticketCode);
+        }
+
+        await tx.tickets.createMany({
+          data: ticketCodes.map(code => ({
+            code,
+            status: "used",
+            user_id: userId,
+            used_at: new Date()
+          }))
+        });
+
+        const createdTickets = await tx.tickets.findMany({
+          where: {
+            code: { in: ticketCodes }
+          },
+          select: { id: true }
+        });
+
+        await tx.votes.createMany({
+          data: createdTickets.map(t => ({
+            user_id: userId,
+            team_id: teamId,
+            ticket_id: t.id
+          }))
+        });
       }
-
-      await tx.tickets.createMany({
-        data: ticketCodes.map(code => ({
-          code,
-          status: "used",
-          user_id: userId,
-          used_at: new Date()
-        }))
-      });
-
-      const createdTickets = await tx.tickets.findMany({
-        where: {
-          code: { in: ticketCodes }
-        },
-        select: { id: true }
-      });
-
-      await tx.votes.createMany({
-        data: createdTickets.map(t => ({
-          user_id: userId,
-          team_id: teamId,
-          ticket_id: t.id
-        }))
-      });
 
       return { duplicate: false, votesAdded: qty };
     }, {
