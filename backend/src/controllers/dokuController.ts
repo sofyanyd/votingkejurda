@@ -1,6 +1,12 @@
 import { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
-import { requestDokuDynamicQris, requestDokuVirtualAccount, requestDokuCheckout, verifyDokuWebhookSignature } from "../lib/doku.js";
+import { 
+  requestDokuDynamicQris, 
+  requestDokuVirtualAccount, 
+  requestDokuCheckout, 
+  verifyDokuWebhookSignature,
+  checkDokuOrderStatus 
+} from "../lib/doku.js";
 import { clearLeaderboardCache, IS_VOTING_CLOSED } from "./voteController.js";
 
 const DEFAULT_PRICE_PER_VOTE = Number(process.env.PRICE_PER_VOTE) || 2000;
@@ -354,7 +360,7 @@ export const manualSyncPayment = async (req: Request, res: Response) => {
  */
 export const getPaymentStatus = async (req: Request, res: Response) => {
   try {
-    const { invoiceId } = req.params;
+    const invoiceId = String(req.params.invoiceId || "");
     if (!invoiceId) {
       return res.status(400).json({ message: "Invoice ID tidak boleh kosong" });
     }
@@ -362,8 +368,8 @@ export const getPaymentStatus = async (req: Request, res: Response) => {
     const tx = await prisma.transactions.findFirst({
       where: {
         OR: [
-          { invoice_id: String(invoiceId) },
-          { code: String(invoiceId) }
+          { invoice_id: invoiceId },
+          { code: invoiceId }
         ]
       },
       select: {
@@ -380,7 +386,21 @@ export const getPaymentStatus = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Transaksi tidak ditemukan" });
     }
 
-    const normalizedStatus = (tx.status === "Lunas" || tx.status === "PAID") ? "PAID" : tx.status.toUpperCase();
+    let normalizedStatus = (tx.status === "Lunas" || tx.status === "PAID") ? "PAID" : tx.status.toUpperCase();
+
+    // If still PENDING, proactively check DOKU API!
+    if (normalizedStatus === "PENDING") {
+      try {
+        const dokuCheck = await checkDokuOrderStatus(invoiceId);
+        if (dokuCheck && dokuCheck.isPaid) {
+          console.log(`[DOKU AUTO-SYNC] Inquire detected PAID status for ${invoiceId}. Auto-completing payment...`);
+          await executePaymentSuccess(invoiceId, "AUTO-INQUIRE-SUCCESS");
+          normalizedStatus = "PAID";
+        }
+      } catch (checkErr) {
+        console.warn(`[DOKU AUTO-SYNC] Direct inquiry check failed for ${invoiceId}:`, checkErr);
+      }
+    }
 
     return res.status(200).json({
       invoiceId: tx.invoice_id || tx.code,

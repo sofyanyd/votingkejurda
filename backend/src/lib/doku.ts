@@ -419,3 +419,61 @@ export const requestDokuCheckout = async (params: {
   };
 };
 
+/**
+ * Check transaction status directly from DOKU API
+ */
+export const checkDokuOrderStatus = async (invoiceId: string): Promise<{ isPaid: boolean; status: string; rawData?: any } | null> => {
+  const config = getDokuConfig();
+  if (!config.clientId || !config.secretKey || config.clientId.includes("YOUR_DOKU")) {
+    return null;
+  }
+
+  const requestId = `REQ-STATUS-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+  const timestamp = new Date().toISOString();
+  const targetPath = `/orders/v1.0/status/${invoiceId}`;
+
+  try {
+    const signature = generateDokuSignatureV2(
+      config.clientId,
+      config.secretKey,
+      requestId,
+      timestamp,
+      targetPath,
+      ""
+    );
+
+    const response = await fetch(`${config.baseUrl}${targetPath}`, {
+      method: "GET",
+      headers: {
+        "Client-Id": config.clientId,
+        "Request-Id": requestId,
+        "Request-Timestamp": timestamp,
+        "Signature": signature
+      }
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data: any = await response.json();
+    const dokuStatus = data?.transaction?.status || 
+                       data?.status || 
+                       data?.order?.status || 
+                       data?.virtual_account_payment?.status;
+
+    const isPaid = ["SUCCESS", "SUCCESSFUL", "0000", "00", "S", "PAID", "LUNAS", "SETTLED"].includes(
+      String(dokuStatus || "").toUpperCase()
+    );
+
+    return {
+      isPaid,
+      status: dokuStatus || "UNKNOWN",
+      rawData: data
+    };
+  } catch (err) {
+    console.error(`[DOKU STATUS CHECK ERROR] for ${invoiceId}:`, err);
+    return null;
+  }
+};
+
