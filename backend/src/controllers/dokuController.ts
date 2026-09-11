@@ -147,13 +147,129 @@ export const createDokuPayment = async (req: Request, res: Response) => {
 
 
 /**
+ * Shared function to mark invoice as PAID, increment votes, and clear cache idempotently
+ */
+export const executePaymentSuccess = async (invoiceId: string, reference?: string, paidAmount?: number) => {
+  const existingTx = await prisma.transactions.findFirst({
+    where: {
+      OR: [
+        { invoice_id: String(invoiceId) },
+        { code: String(invoiceId) },
+        { doku_reference: String(invoiceId) }
+      ]
+    }
+  });
+
+  if (!existingTx) {
+    throw new Error(`Transaksi tidak ditemukan untuk invoice: ${invoiceId}`);
+  }
+
+  // Verify nominal matches if paidAmount is supplied
+  if (!isNaN(Number(paidAmount)) && Number(paidAmount) > 0 && Number(paidAmount) !== existingTx.amount) {
+    console.warn(`[DOKU WARNING] Nominal mismatch for invoice ${invoiceId}. Expected: ${existingTx.amount}, Received: ${paidAmount}`);
+  }
+
+  return await prisma.$transaction(async (tx) => {
+    const currentTx = await tx.transactions.findUnique({
+      where: { id: existingTx.id }
+    });
+
+    if (!currentTx) {
+      throw new Error("Transaksi hilang saat diproses");
+    }
+
+    // Strict Idempotency Check
+    if (currentTx.status === "PAID" || currentTx.status === "Lunas") {
+      console.log(`[PAYMENT IDEMPOTENCY] Invoice ${invoiceId} is already PAID. Duplicate skipped.`);
+      return { duplicate: true, votesAdded: 0, invoiceId: currentTx.invoice_id || currentTx.code };
+    }
+
+    // Update status to PAID
+    await tx.transactions.update({
+      where: { id: currentTx.id },
+      data: {
+        status: "PAID",
+        paid_at: new Date(),
+        doku_reference: reference || currentTx.doku_reference
+      }
+    });
+
+    let user = await tx.users.findFirst({ where: { role: "voter" } });
+    if (!user) {
+      user = await tx.users.findFirst();
+    }
+    const userId = user ? user.id : 2;
+
+    const teamId = currentTx.team_id;
+    const qty = currentTx.votes_count;
+    const cleanCode = currentTx.code;
+
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < qty; i += CHUNK_SIZE) {
+      const chunkQty = Math.min(CHUNK_SIZE, qty - i);
+      const ticketCodes: string[] = [];
+      for (let j = 0; j < chunkQty; j++) {
+        const idx = i + j;
+        const ticketCode = `DOKU-TICK-${cleanCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${idx}-${Math.floor(100 + Math.random() * 900)}`;
+        ticketCodes.push(ticketCode);
+      }
+
+      await tx.tickets.createMany({
+        data: ticketCodes.map(code => ({
+          code,
+          status: "used",
+          user_id: userId,
+          used_at: new Date()
+        }))
+      });
+
+      const createdTickets = await tx.tickets.findMany({
+        where: {
+          code: { in: ticketCodes }
+        },
+        select: { id: true }
+      });
+
+      await tx.votes.createMany({
+        data: createdTickets.map(t => ({
+          user_id: userId,
+          team_id: teamId,
+          ticket_id: t.id
+        }))
+      });
+    }
+
+    clearLeaderboardCache();
+    return { duplicate: false, votesAdded: qty, invoiceId: currentTx.invoice_id || currentTx.code };
+  }, {
+    maxWait: 15000,
+    timeout: 60000
+  });
+};
+
+/**
+ * GET /api/payment/doku/webhook
+ * Health check endpoint for DOKU webhook tester or manual verification in browser
+ */
+export const checkWebhookHealth = async (req: Request, res: Response) => {
+  return res.status(200).json({
+    status: "ACTIVE",
+    message: "DOKU Webhook endpoint is active and listening for POST notifications from DOKU.",
+    timestamp: new Date().toISOString()
+  });
+};
+
+/**
  * POST /api/payment/doku/webhook
  * Handles payment notification webhook from DOKU for both Virtual Account and QRIS
  */
 export const dokuWebhook = async (req: Request, res: Response) => {
   try {
-    const rawBody = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
+    const rawBody = (req as any).rawBody || (typeof req.body === "string" ? req.body : JSON.stringify(req.body));
     const targetPath = req.originalUrl || req.url || "/api/payment/doku/webhook";
+
+    console.log("[DOKU WEBHOOK HEADERS]:", JSON.stringify(req.headers));
+    console.log("[DOKU WEBHOOK RAW BODY]:", rawBody);
 
     // 1. Verify DOKU signature
     const isValidSignature = verifyDokuWebhookSignature(req.headers, rawBody, targetPath);
@@ -176,6 +292,7 @@ export const dokuWebhook = async (req: Request, res: Response) => {
                       payload.virtual_account_info?.virtual_account_number;
 
     const dokuStatus = payload.transaction?.status || 
+                       payload.virtual_account_payment?.status ||
                        payload.status || 
                        payload.txnStatus || 
                        payload.payment_status || 
@@ -194,108 +311,8 @@ export const dokuWebhook = async (req: Request, res: Response) => {
       return res.status(200).json({ status: "SUCCESS", message: "Notification received but payment not completed" });
     }
 
-    // 2. Find transaction in database
-    const existingTx = await prisma.transactions.findFirst({
-      where: {
-        OR: [
-          { invoice_id: String(invoiceId) },
-          { code: String(invoiceId) },
-          { doku_reference: String(invoiceId) }
-        ]
-      }
-    });
-
-    if (!existingTx) {
-      console.error(`[DOKU WEBHOOK] Transaction not found for invoice: ${invoiceId}`);
-      return res.status(404).json({ status: "FAILED", message: "Transaksi tidak ditemukan" });
-    }
-
-    // Verify nominal matches if paidAmount is supplied
-    if (!isNaN(paidAmount) && paidAmount > 0 && paidAmount !== existingTx.amount) {
-      console.warn(`[DOKU WEBHOOK WARNING] Nominal mismatch for invoice ${invoiceId}. Expected: ${existingTx.amount}, Received: ${paidAmount}`);
-    }
-
-    // 3. IDEMPOTENT DB TRANSACTION: Lock & Check if already PAID
-    const result = await prisma.$transaction(async (tx) => {
-      // Re-fetch transaction inside lock
-      const currentTx = await tx.transactions.findUnique({
-        where: { id: existingTx.id }
-      });
-
-      if (!currentTx) {
-        throw new Error("Transaksi hilang saat diproses");
-      }
-
-      // Strict Idempotency Check:
-      // If transaction status is already PAID or Lunas, ignore duplicate webhook!
-      if (currentTx.status === "PAID" || currentTx.status === "Lunas") {
-        console.log(`[DOKU WEBHOOK IDEMPOTENCY] Duplicate webhook for invoice ${invoiceId} ignored. Vote count will NOT be incremented.`);
-        return { duplicate: true };
-      }
-
-      // Update transaction status to PAID
-      await tx.transactions.update({
-        where: { id: currentTx.id },
-        data: {
-          status: "PAID",
-          paid_at: new Date(),
-          doku_reference: payload.transaction?.id || payload.doku_grand_id || payload.reference_number || currentTx.doku_reference
-        }
-      });
-
-      // Increment votes by creating tickets and vote entries in DB
-      let user = await tx.users.findFirst({ where: { role: "voter" } });
-      if (!user) {
-        user = await tx.users.findFirst();
-      }
-      const userId = user ? user.id : 2;
-
-      const teamId = currentTx.team_id;
-      const qty = currentTx.votes_count;
-      const cleanCode = currentTx.code;
-
-      const CHUNK_SIZE = 500;
-      for (let i = 0; i < qty; i += CHUNK_SIZE) {
-        const chunkQty = Math.min(CHUNK_SIZE, qty - i);
-        const ticketCodes: string[] = [];
-        for (let j = 0; j < chunkQty; j++) {
-          const idx = i + j;
-          const ticketCode = `DOKU-TICK-${cleanCode}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${idx}-${Math.floor(100 + Math.random() * 900)}`;
-          ticketCodes.push(ticketCode);
-        }
-
-        await tx.tickets.createMany({
-          data: ticketCodes.map(code => ({
-            code,
-            status: "used",
-            user_id: userId,
-            used_at: new Date()
-          }))
-        });
-
-        const createdTickets = await tx.tickets.findMany({
-          where: {
-            code: { in: ticketCodes }
-          },
-          select: { id: true }
-        });
-
-        await tx.votes.createMany({
-          data: createdTickets.map(t => ({
-            user_id: userId,
-            team_id: teamId,
-            ticket_id: t.id
-          }))
-        });
-      }
-
-      return { duplicate: false, votesAdded: qty };
-    }, {
-      maxWait: 15000,
-      timeout: 60000
-    });
-
-    clearLeaderboardCache();
+    const reference = payload.transaction?.id || payload.doku_grand_id || payload.virtual_account_payment?.reference_number || payload.reference_number;
+    const result = await executePaymentSuccess(invoiceId, reference, paidAmount);
 
     if (result.duplicate) {
       return res.status(200).json({ status: "SUCCESS", message: "Duplicate webhook ignored (Already PAID)" });
@@ -306,6 +323,28 @@ export const dokuWebhook = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Gagal memproses webhook DOKU:", error);
     return res.status(500).json({ status: "FAILED", message: error.message || "Internal Server Error" });
+  }
+};
+
+/**
+ * POST /api/payment/sync/:invoiceId
+ * Sync payment status manually by Admin
+ */
+export const manualSyncPayment = async (req: Request, res: Response) => {
+  try {
+    const invoiceId = String(req.params.invoiceId || "");
+    if (!invoiceId) {
+      return res.status(400).json({ message: "Invoice ID tidak boleh kosong" });
+    }
+
+    const result = await executePaymentSuccess(invoiceId, `MANUAL-SYNC-${Date.now()}`);
+    return res.status(200).json({
+      message: `Invoice ${invoiceId} berhasil diverifikasi dan ${result.votesAdded} suara telah ditambahkan ke sistem!`,
+      result
+    });
+  } catch (error: any) {
+    console.error("Gagal sync payment:", error);
+    return res.status(500).json({ message: error.message || "Gagal melakukan sinkronisasi pembayaran" });
   }
 };
 

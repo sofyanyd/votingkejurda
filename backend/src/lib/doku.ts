@@ -74,53 +74,74 @@ export const verifyDokuWebhookSignature = (
 
   const incomingSignature = reqHeaders["signature"] || reqHeaders["x-signature"] || reqHeaders["Signature"] || reqHeaders["X-Signature"];
   if (!incomingSignature) {
-    console.warn("[DOKU WARNING] Missing signature header in webhook request.");
+    console.warn("[DOKU WARNING] Missing signature header in webhook request. Headers:", JSON.stringify(reqHeaders));
     return false;
   }
 
   const requestId = reqHeaders["request-id"] || reqHeaders["x-external-id"] || reqHeaders["x-request-id"] || "";
   const requestTimestamp = reqHeaders["request-timestamp"] || reqHeaders["x-timestamp"] || "";
 
-  // 1. Attempt V2 HMAC-SHA256 signature match
-  try {
-    const expectedSigV2 = generateDokuSignatureV2(
-      clientId,
-      secretKey,
-      requestId,
-      requestTimestamp,
-      targetPath,
-      rawBody
-    );
+  // Test possible path targets that DOKU may hash against
+  const pathCandidates = Array.from(new Set([
+    targetPath,
+    reqHeaders["request-target"],
+    reqHeaders["Request-Target"],
+    "/api/payment/doku/webhook",
+    "/payment/doku/webhook",
+    "/doku/webhook"
+  ])).filter(Boolean) as string[];
 
-    const cleanIncoming = String(incomingSignature).trim();
-    const cleanExpected = expectedSigV2.trim();
+  const cleanIncoming = String(incomingSignature).trim();
 
-    if (cleanIncoming === cleanExpected || cleanIncoming.replace("HMACSHA256=", "") === cleanExpected.replace("HMACSHA256=", "")) {
-      return true;
+  // 1. Attempt V2 HMAC-SHA256 signature match across possible paths
+  for (const path of pathCandidates) {
+    try {
+      const expectedSigV2 = generateDokuSignatureV2(
+        clientId,
+        secretKey,
+        requestId,
+        requestTimestamp,
+        path,
+        rawBody
+      );
+
+      const cleanExpected = expectedSigV2.trim();
+
+      if (
+        cleanIncoming === cleanExpected || 
+        cleanIncoming.replace("HMACSHA256=", "") === cleanExpected.replace("HMACSHA256=", "")
+      ) {
+        console.log(`[DOKU WEBHOOK] V2 Signature verified successfully using path: ${path}`);
+        return true;
+      }
+    } catch (err) {
+      console.error(`V2 signature verify error on path ${path}:`, err);
     }
-  } catch (err) {
-    console.error("V2 signature verify error:", err);
   }
 
-  // 2. Attempt SNAP HMAC-SHA512 signature match
-  try {
-    const accessToken = (reqHeaders["authorization"] || "").replace("Bearer ", "");
-    const expectedSigSnap = generateDokuSignatureSnap(
-      secretKey,
-      "POST",
-      targetPath,
-      accessToken,
-      rawBody,
-      requestTimestamp
-    );
+  // 2. Attempt SNAP HMAC-SHA512 signature match across possible paths
+  for (const path of pathCandidates) {
+    try {
+      const accessToken = (reqHeaders["authorization"] || "").replace("Bearer ", "");
+      const expectedSigSnap = generateDokuSignatureSnap(
+        secretKey,
+        "POST",
+        path,
+        accessToken,
+        rawBody,
+        requestTimestamp
+      );
 
-    if (String(incomingSignature).trim() === expectedSigSnap.trim()) {
-      return true;
+      if (cleanIncoming === expectedSigSnap.trim()) {
+        console.log(`[DOKU WEBHOOK] SNAP Signature verified successfully using path: ${path}`);
+        return true;
+      }
+    } catch (err) {
+      console.error(`SNAP signature verify error on path ${path}:`, err);
     }
-  } catch (err) {
-    console.error("SNAP signature verify error:", err);
   }
 
+  console.warn(`[DOKU WEBHOOK WARNING] Signature mismatch. Incoming: ${cleanIncoming}, tested paths: ${JSON.stringify(pathCandidates)}`);
   return false;
 };
 

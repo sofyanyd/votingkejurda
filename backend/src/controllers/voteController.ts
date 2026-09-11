@@ -104,6 +104,14 @@ export const getTransactions = async (req: Request, res: Response) => {
     });
 
     const mapped = transactions.map(t => {
+      const normalizedStatus = (t.status === "Lunas" || t.status === "PAID") 
+        ? "Lunas" 
+        : (t.status === "pending" || t.status === "PENDING" || t.status === "Pending") 
+        ? "Pending" 
+        : (t.status === "Batal" || t.status === "FAILED" || t.status === "EXPIRED") 
+        ? "Batal" 
+        : t.status;
+
       return {
         id: t.code,
         date: t.created_at ? new Date(t.created_at).toLocaleDateString("id-ID", {
@@ -122,7 +130,7 @@ export const getTransactions = async (req: Request, res: Response) => {
         amount: t.amount,
         kodeUnik: t.kode_unik || 0,
         grandTotal: t.grand_total || t.amount,
-        status: t.status === "pending" ? "Pending" : t.status === "Lunas" ? "Lunas" : t.status === "Batal" ? "Batal" : t.status,
+        status: normalizedStatus,
         createdAt: t.created_at
       };
     });
@@ -142,12 +150,22 @@ export const submitVotes = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Keranjang vote kosong atau tidak valid" });
     }
 
-    const userId = 2; // Default voter user ID for guest checkout
+    let user = await prisma.users.findFirst({ where: { role: "voter" } });
+    if (!user) {
+      user = await prisma.users.findFirst();
+    }
+    const userId = user ? user.id : 2;
+
+    const CHUNK_SIZE = 500;
 
     await prisma.$transaction(async (tx) => {
       for (const item of cart) {
         const teamId = Number(item.id);
         const qty = Number(item.qty);
+
+        if (isNaN(teamId) || !Number.isInteger(qty) || qty <= 0) {
+          throw new Error("Data vote tidak valid");
+        }
 
         const teamExists = await tx.teams.findUnique({
           where: { id: teamId }
@@ -156,51 +174,46 @@ export const submitVotes = async (req: Request, res: Response) => {
           throw new Error(`Tim dengan ID ${teamId} tidak ditemukan`);
         }
 
-        // 1. Create transaction record for this team purchase
-        const txCode = `TX-${Math.floor(10000 + Math.random() * 90000)}`;
-        await tx.transactions.create({
-          data: {
-            code: txCode,
-            team_id: teamId,
-            votes_count: qty,
-            amount: qty * getVotePrice(),
-            voter_email: "guest@forbasi.com",
-            status: "Lunas"
+        for (let i = 0; i < qty; i += CHUNK_SIZE) {
+          const chunkQty = Math.min(CHUNK_SIZE, qty - i);
+          const ticketCodes: string[] = [];
+          for (let j = 0; j < chunkQty; j++) {
+            const idx = i + j;
+            const ticketCode = `VOTE-DIRECT-${teamId}-${Date.now()}-${idx}-${Math.floor(100 + Math.random() * 900)}`;
+            ticketCodes.push(ticketCode);
           }
-        });
 
-        // 2. Create tickets and votes in parallel
-        const votePromises = [];
-        for (let i = 0; i < qty; i++) {
-          const ticketCode = `TICKET-AUTO-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
-          
-          votePromises.push((async () => {
-            const newTicket = await tx.tickets.create({
-              data: {
-                code: ticketCode,
-                status: "used",
-                user_id: userId,
-                used_at: new Date()
-              }
-            });
+          await tx.tickets.createMany({
+            data: ticketCodes.map(code => ({
+              code,
+              status: "used",
+              user_id: userId,
+              used_at: new Date()
+            }))
+          });
 
-            await tx.votes.create({
-              data: {
-                user_id: userId,
-                team_id: teamId,
-                ticket_id: newTicket.id
-              }
-            });
-          })());
+          const createdTickets = await tx.tickets.findMany({
+            where: {
+              code: { in: ticketCodes }
+            },
+            select: { id: true }
+          });
+
+          await tx.votes.createMany({
+            data: createdTickets.map(t => ({
+              user_id: userId,
+              team_id: teamId,
+              ticket_id: t.id
+            }))
+          });
         }
-
-        await Promise.all(votePromises);
       }
     }, {
       maxWait: 5000,
       timeout: 30000,
     });
 
+    clearLeaderboardCache();
     res.status(200).json({ message: "Vote berhasil dikirim!" });
   } catch (error: any) {
     console.error("Gagal melakukan voting:", error);
@@ -292,33 +305,39 @@ export const completePayment = async (paymentCode: string) => {
   const userId = user ? user.id : 2;
 
   return await prisma.$transaction(async (tx) => {
-    const updateResult = await tx.transactions.updateMany({
+    // Search transactions by code or invoice_id
+    const existingTransactions = await tx.transactions.findMany({
       where: {
-        code: {
-          contains: cleanCode
-        },
-        status: "pending"
-      },
-      data: {
-        status: "Lunas"
+        OR: [
+          { code: { contains: cleanCode } },
+          { invoice_id: { contains: cleanCode } }
+        ]
       }
     });
 
-    if (updateResult.count === 0) {
-      console.log(`No pending transactions found for paymentCode: ${cleanCode}`);
-      return { success: false, message: "No pending transactions found or already processed" };
+    if (existingTransactions.length === 0) {
+      console.log(`No transactions found for paymentCode: ${cleanCode}`);
+      return { success: false, message: "Transaksi tidak ditemukan" };
     }
 
-    const transactions = await tx.transactions.findMany({
+    const nonPaid = existingTransactions.filter(t => t.status !== "Lunas" && t.status !== "PAID");
+    if (nonPaid.length === 0) {
+      console.log(`Transactions for ${cleanCode} are already Lunas/PAID`);
+      return { success: true, count: existingTransactions.length };
+    }
+
+    // Mark as Lunas
+    await tx.transactions.updateMany({
       where: {
-        code: {
-          contains: cleanCode
-        },
-        status: "Lunas"
+        id: { in: nonPaid.map(t => t.id) }
+      },
+      data: {
+        status: "Lunas",
+        paid_at: new Date()
       }
     });
 
-    for (const transaction of transactions) {
+    for (const transaction of nonPaid) {
       const teamId = transaction.team_id;
       const qty = transaction.votes_count;
 
@@ -359,7 +378,7 @@ export const completePayment = async (paymentCode: string) => {
     }
 
     clearLeaderboardCache();
-    return { success: true, count: transactions.length };
+    return { success: true, count: nonPaid.length };
   }, {
     maxWait: 15000,
     timeout: 60000
