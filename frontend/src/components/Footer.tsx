@@ -59,7 +59,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-3 text-sm">
                 <Phone className="text-emerald-500 shrink-0" size={18} />
-                <span className="text-slate-300">+6285129082672 (Aldy)</span>
+                <span className="text-slate-300">+6289605997177 (Arda)</span>
               </li>
             </ul>
             
