@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
 
 // Tentukan apakah periode voting sudah berakhir (true = ditutup, false = dibuka)
-export const IS_VOTING_CLOSED = false;
+export const IS_VOTING_CLOSED = true;
 export const getVotePrice = () => Number(process.env.PRICE_PER_VOTE) || 2000;
 
 let leaderboardCache: any = null;

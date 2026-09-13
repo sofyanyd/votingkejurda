@@ -4,7 +4,7 @@ import { ArrowLeft, Minus, Plus, ShoppingCart, Info, ChevronUp, Ticket, Sparkles
 import { usePletonStore } from "../stores/pletonStore";
 import { useTransactionStore } from "../stores/transactionStore";
 
-export const IS_VOTING_CLOSED = false;
+export const IS_VOTING_CLOSED = true;
 
 interface Participant {
   id: number;
@@ -59,7 +59,7 @@ export default function CatalogVote() {
 
   const handleSubmitVotes = async () => {
     if (IS_VOTING_CLOSED) {
-      alert("Voting telah ditutup. Pembelian suara baru tidak diizinkan.");
+      alert("Periode voting telah resmi ditutup. Pembelian suara baru tidak diizinkan.");
       return;
     }
     if (cart.length === 0) {
@@ -127,28 +127,30 @@ export default function CatalogVote() {
             <ArrowLeft size={16} /> Kembali
           </button>
 
-          <div className="mb-8">
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3.5 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
-              <Sparkles size={12} /> Official Voting Platform KEJURDA 2026
+          <div className="mb-6">
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold text-amber-700 bg-amber-50 border border-amber-200 px-3.5 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
+              <Sparkles size={12} /> Voting Ditutup
             </span>
             <h1 className="text-2xl md:text-4xl font-black text-slate-800 mt-3 tracking-tight">
               Katalog <span className="text-emerald-600">Tim</span>
             </h1>
-            <p className="text-slate-500 text-xs md:text-sm mt-1.5 font-medium">Pilih delegasi daerah jagoanmu dari berbagai kategori dan gabungkan dalam 1 transaksi sekaligus.</p>
+            <p className="text-slate-500 text-xs md:text-sm mt-1.5 font-medium">Lihat seluruh profil tim delegasi daerah yang bertanding di KEJURDA 2026.</p>
           </div>
 
           {IS_VOTING_CLOSED && (
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 p-5 rounded-2xl flex items-start gap-3.5 mb-8 shadow-sm">
-              <Info size={22} className="text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-black text-sm">Voting Telah Ditutup</h4>
-                <p className="text-xs text-amber-700 mt-1 leading-relaxed">
-                  Periode voting resmi untuk KEJURDA 2026 telah berakhir. Pembelian suara baru tidak lagi diizinkan. 
-                  Silakan pantau perolehan suara akhir finalis di halaman Leaderboard!
+            <div className="bg-amber-50/90 border-2 border-amber-200 text-amber-900 p-5 sm:p-6 rounded-3xl flex items-start gap-4 mb-8 shadow-sm">
+              <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200">
+                <Info size={22} />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-black text-base text-amber-950">Periode Voting Resmi Telah Ditutup</h4>
+                <p className="text-xs sm:text-sm text-amber-800 mt-1 leading-relaxed font-medium">
+                  Pemungutan suara resmi untuk KEJURDA 2026 telah berakhir. Akses pembelian tiket dan voting telah dinonaktifkan. 
+                  Anda tetap dapat melihat daftar seluruh peserta di katalog ini dan memantau perolehan suara akhir di halaman Leaderboard.
                 </p>
                 <button 
                   onClick={() => navigate("/leaderboard")} 
-                  className="mt-3 text-xs font-extrabold text-amber-900 hover:text-emerald-700 transition-colors inline-flex items-center gap-1.5 bg-amber-100/80 hover:bg-amber-200 px-3.5 py-2 rounded-xl border border-amber-200 shadow-sm cursor-pointer"
+                  className="mt-3.5 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-500 transition-all inline-flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-md shadow-emerald-600/20 hover:scale-[1.02] cursor-pointer"
                 >
                   Pantau Hasil di Leaderboard &rarr;
                 </button>

@@ -73,9 +73,9 @@ export default function Dashboard() {
 
                 <div className="relative z-10 w-full px-6 md:px-12 max-w-4xl mx-auto flex flex-col items-center text-center">
                     
-                    <div className="inline-flex items-center gap-2 bg-emerald-800/50 border border-emerald-700/50 backdrop-blur-sm text-emerald-300 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest mb-6">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        Live Voting Berlangsung
+                    <div className="inline-flex items-center gap-2 bg-amber-900/60 border border-amber-600/50 backdrop-blur-sm text-amber-200 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest mb-6">
+                        <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                        Voting Resmi Ditutup
                     </div>
                     
                     <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-[1.1] tracking-tight">
@@ -86,7 +86,7 @@ export default function Dashboard() {
                     </h1>
                     
                     <p className="text-emerald-100/80 text-base md:text-lg lg:text-xl leading-relaxed mb-10 max-w-2xl mx-auto font-medium">
-                        Selamat datang di panggung tertinggi KEJURDA 2026. Kawal delegasi kebanggaanmu dan tentukan siapa yang layak menduduki tahta Juara Favorit tahun ini.
+                        Periode pemungutan suara resmi KEJURDA 2026 telah berakhir. Terima kasih atas partisipasi luar biasa seluruh pendukung delegasi daerah se-Jawa Tengah.
                     </p>
                     
                     {/* Tombol Aksi Utama & Shortcut Klasemen */}
@@ -94,17 +94,17 @@ export default function Dashboard() {
                         <Button 
                             variant="primary" 
                             className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black border-none px-8 py-4 flex items-center justify-center gap-2 transition-all hover:scale-105 shadow-lg shadow-emerald-500/20" 
-                            onClick={() => navigate("/dukungan")}
+                            onClick={() => navigate("/leaderboard")}
                         >
-                            BERIKAN DUKUNGAN <ChevronRight size={18} />
+                            <Trophy size={18} /> LIHAT KLASEMEN AKHIR
                         </Button>
 
                         <Button 
                             variant="outline" 
                             className="w-full sm:w-auto bg-emerald-950/40 hover:bg-emerald-800/50 text-white font-bold border border-emerald-700/60 px-8 py-4 flex items-center justify-center gap-2 transition-all backdrop-blur-sm hover:scale-105" 
-                            onClick={() => navigate("/leaderboard")}
+                            onClick={() => navigate("/catalogvote")}
                         >
-                            <TrendingUp size={18} className="text-emerald-300" /> CEK KLASEMEN
+                            KATALOG TIM <ChevronRight size={18} />
                         </Button>
                     </div>
                 </div>

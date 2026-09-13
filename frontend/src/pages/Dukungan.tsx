@@ -36,26 +36,35 @@ export default function Dukungan() {
         </div>
 
         <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
-          <div className="inline-flex items-center gap-1.5 bg-emerald-50/80 border border-emerald-100/50 text-emerald-600 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest mb-6 shadow-sm">
-            <Sparkles size={14} /> Official Ticketing Portal
+          <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-widest mb-6 shadow-sm">
+            <Sparkles size={14} /> Voting Resmi Telah Ditutup
           </div>
           
           <h1 className="text-4xl md:text-6xl font-black text-slate-800 tracking-tight leading-[1.15] mb-6">
-            Otorisasi <span className="text-emerald-600">Dukunganmu</span>
+            Hasil Akhir <span className="text-emerald-600">Dukungan</span>
           </h1>
           
           <p className="text-slate-500 text-base md:text-lg leading-relaxed font-medium mb-10 max-w-2xl">
-            Bantu delegasi daerah kebanggaanmu merebut tahta Juara Favorit di KEJURDA 2026. Dapatkan tiket vote resmi dengan transparansi sistem penuh.
+            Periode pemungutan suara resmi untuk KEJURDA 2026 telah berakhir. Anda tetap dapat menjelajahi seluruh profil peserta di katalog atau memantau perolehan suara akhir di halaman klasemen.
           </p>
           
-          <Button 
-              variant="primary" 
-              onClick={() => navigate("/catalogvote")}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-8 py-4 flex items-center justify-center gap-2 transition-all rounded-xl shadow-[0_8px_20px_rgb(16,185,129,0.2)] hover:-translate-y-1"
-          >
-              <Ticket size={20} />
-              BELI TIKET VOTE SEKARANG
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button 
+                variant="primary" 
+                onClick={() => navigate("/leaderboard")}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-8 py-4 flex items-center justify-center gap-2 transition-all rounded-xl shadow-[0_8px_20px_rgb(16,185,129,0.2)] hover:-translate-y-1"
+            >
+                <Ticket size={20} />
+                LIHAT KLASEMEN AKHIR
+            </Button>
+            <Button 
+                variant="outline" 
+                onClick={() => navigate("/catalogvote")}
+                className="bg-white hover:bg-slate-50 text-slate-700 font-bold px-8 py-4 flex items-center justify-center gap-2 transition-all rounded-xl border border-slate-200 shadow-sm hover:-translate-y-1"
+            >
+                LIHAT KATALOG TIM
+            </Button>
+          </div>
         </div>
       </section>
 
