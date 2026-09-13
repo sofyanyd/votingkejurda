@@ -73,7 +73,7 @@ export default function Leaderboard() {
           </div>
           
           <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight mb-3">
-            Klasemen <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-200">Sementara</span>
+            Klasemen <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-200">Final</span>
           </h1>
           
           <p className="text-slate-400 text-sm md:text-base max-w-2xl mx-auto font-medium mb-8">
